@@ -17,20 +17,25 @@ def dU(q, alpha):
     return np.asarray([dU1, dU2])
 
 
-def Verlet(q0, p0, eps, alpha, m):
-    p_tmp = p0 - eps/2*dU(q0, alpha)
-    q = q0 + eps*np.divide(p_tmp, m)
-    p = p_tmp - eps/2*dU(q, alpha)
+def Verlet(q0, p0, eps, T, alpha, m):
+    t=0
+    q=q0
+    p=p0
+    while t<T:
+        p_tmp = p - eps/2*dU(q, alpha)
+        q = q + eps*np.divide(p_tmp, m)
+        p = p_tmp - eps/2*dU(q, alpha)
+        t=t+eps
     return q, p
 
 
 
-def Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha):
+def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
     q = np.zeros([N+1, 2])
     q[0, :]=q0
     for i in range(N):
         p = st.norm.rvs(loc=0, scale=m)
-        q_star, p_star = Verlet(q[i, :], p, eps, alpha, m)
+        q_star, p_star = Verlet(q[i, :], p, T, eps, alpha, m)
         u = np.random.uniform()
         if (u<np.exp(-U(q_star, alpha)+U(q[i, :], alpha)-K(p_star, m)+K(p, m))):
             q[i+1, :] = q_star
@@ -48,22 +53,22 @@ def main():
     eps = 0.01
     alpha = 10**1
     m = [1, 1]
-    T = 40
-    N = int(np.floor(T/eps))
+    T = 1
+    N = 1000
 
-    n = 3000
+    n = 1
     final_q = np.zeros([n, 2])
 
     #final_q[:, :] = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)[-1, :]
     #print(np.shape(final_q))
     
     for i in range(n):
-        q = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)
+        q = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         final_q[i, :] = q[-1, :]
         if (i+1)%100 == 0:
             print("Iteration: ", i+1, "/", n)
     
-    #q = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)
+    #q = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
 
     t = np.linspace(0, T, N+1)
     v = np.exp(-alpha*(q[:, 0]**2+q[:, 1]**2-1/4)**2)
