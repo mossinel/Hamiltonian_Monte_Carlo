@@ -2,8 +2,8 @@ import numpy as np
 import scipy.stats as st
 import matplotlib.pyplot as plt
 
-def f(q1, q2, alpha):
-    return np.exp(-alpha*(q1**2+q2**2-1/4)**2)
+def f(q, alpha):
+    return np.exp(-alpha*(q[0]**2+q[1]**2-1/4)**2)
 
 def U(q, alpha):
     return alpha*(q[0]**2+q[1]**2-1/4)**2
@@ -28,11 +28,35 @@ def Verlet(q0, p0, eps, T, alpha, m):
         t=t+eps
     return q, p
 
+def Metropolis_Hastings(q0, N, alpha):
+    q = np.zeros([N+1, 2])
+    q[0, :] = q0
+    for i in range(N):
+        q_star = np.random.normal(q[i, :], ???)
+        a = f(q_star, alpha)/f(q, alpha)
+        u = np.random.uniform()
+        if (u<a):
+            q[i+1, :] = q_star
+        else:
+            q[i+1, :] = q[i, :]
+
+
+def autocorrelation(X):
+    mu = np.mean(X, axis=0)
+    N = len(X[:, 0])
+    cov = np.zeros(N)
+    corr = np.zeros(N)
+    for k in range(N):
+        for i in range(N-k):
+            cov[k] += ((X[i+k])-mu)*(X[i]-mu)
+        cov[k] = (1/(N-1))*cov[k]
+    return corr
+
 
 
 def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
     q = np.zeros([N+1, 2])
-    q[0, :]=q0
+    q[0, :] = q0
     for i in range(N):
         p = st.norm.rvs(loc=0, scale=m)
         q_star, p_star = Verlet(q[i, :], p, T, eps, alpha, m)
@@ -43,20 +67,17 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
             q[i+1, :] = q[i, :]
     
     return q
-
-    
-
-    
+  
 
 def main():
-    q0 = [0, 0]
+    q0 = [0, 0] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
     eps = 0.01
     alpha = 10**1
     m = [1, 1]
-    T = 1
-    N = 1000
+    T = 0.1
+    N = 100
 
-    n = 1
+    n = 5000
     final_q = np.zeros([n, 2])
 
     #final_q[:, :] = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)[-1, :]
@@ -70,17 +91,17 @@ def main():
     
     #q = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
 
-    t = np.linspace(0, T, N+1)
+    t = np.linspace(0, T*N, N+1)
     v = np.exp(-alpha*(q[:, 0]**2+q[:, 1]**2-1/4)**2)
-    x = np.linspace(-1, 1, 100)
-    y = np.zeros([100, 100])
-    for i in range(100):
+    x = np.linspace(-1, 1, 50)
+    y = np.zeros([50, 50])
+    for i in range(50):
         y[:, i] = np.exp(-alpha*(x[:]**2+x[i]**2-1/4)**2)
 
     fig, axs = plt.subplots(2, 2) 
-    axs[0, 0].hist(final_q[:, 0], 20, density=False)
-    axs[0, 1].hist(final_q[:, 1], 20, density=False)
-    axs[1, 0].hist2d(final_q[:, 0], final_q[:, 1], bins=(20, 20), cmap=plt.cm.jet)
+    axs[0, 0].hist(final_q[:, 0], 50, density=False)
+    axs[0, 1].hist(final_q[:, 1], 50, density=False)
+    axs[1, 0].hist2d(final_q[:, 0], final_q[:, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[1, 1].pcolormesh(x, x, y, cmap=plt.cm.jet)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
