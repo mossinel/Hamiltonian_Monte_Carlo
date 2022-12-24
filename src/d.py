@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats as st
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 def f(q, alpha):
     return np.exp(-alpha*(q@q-1/4)**2)
@@ -41,15 +42,14 @@ def autocorrelation(X):
 
 
 
-def Metropolis_Hastings(q0, N, alpha, c):
+def Metropolis_Hastings(q0, N, alpha, sigma):
     q = np.zeros([N+1, 2])
     q[0, :] = q0
     accepted = 0
     rejected = 0
     for i in range(N):
-        q_star = np.random.multivariate_normal(mean=q[i, :], cov=c*np.eye(2))
-        
-        a = f(q_star, alpha)/f(q[i, :], alpha)
+        q_star = np.random.multivariate_normal(mean=q[i, :], cov=sigma*np.eye(2))
+        a = f(q_star, alpha)/np.maximum(f(q[i, :], alpha), np.finfo(np.float64).eps)
         u = np.random.uniform()
         if (u<a):
             q[i+1, :] = q_star
@@ -80,19 +80,34 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
             #print("Problem")
     ratio = accepted/(accepted+rejected)
     return q, ratio
+
+def prepare_animation(bar_container):
+    def animate(frame_number, q):
+        data_x = q[frame_number, :, 0]
+        data_y = q[frame_number, :, 1] 
+        n, _ , _ , _ = np.histogram2d(data_x, data_y, bins=(50, 50), cmap=plt.cm.jet)
+        for count, rect in zip(n, bar_container.patches):
+            rect.set_height(count)
+
+        return bar_container.patches
+    
+    return animate
+
+
+        
   
 
 def main():
-    q0 = [0.5, 0.5] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
+    q0 = [0.0, 0.0] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
     eps = 0.01
     alpha = 10**1
     m = [1, 1]
-    T = 0.05
-    N = 300
-    c = 0.01
+    T = 0.1
+    N = 600
+    sigma = 0.1
     
     
-    n = 1000
+    n = 2000
     final_q = np.zeros([n, 2])
     ratio = np.zeros(n)
     big_q = np.zeros([n, N+1, 2])
@@ -101,9 +116,9 @@ def main():
     #print(np.shape(final_q))
     
     for i in range(n):
-        q0 = np.random.normal(size=2)
+        #q0 = [0.5, 0.5]+np.random.normal(size=2)/2
         #q, ratio[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
-        q, ratio[i] = Metropolis_Hastings(q0, N, alpha, c)
+        q, ratio[i] = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
         big_q[i, :, :] = q
         if (i+1)%100 == 0:
@@ -121,12 +136,25 @@ def main():
     for i in range(50):
         y[:, i] = np.exp(-alpha*(x[:]**2+x[i]**2-1/4)**2)
 
+    flatt = 50
+    idx = flatt+np.asarray(range(n-flatt))
+    #print(idx)
+    tail_qx = big_q[idx, :, 0]
+    tail_qy = big_q[idx, :, 1]
+    avx = np.reshape(tail_qx, -1)
+    avy = np.reshape(tail_qy, -1)
+
     fig, axs = plt.subplots(2, 2) 
-    axs[0, 0].hist(final_q[:, 0], 50, density=False)
-    axs[0, 1].hist(final_q[:, 1], 50, density=False)
+    #axs[0, 0].hist(final_q[:, 0], 50, density=False)
+    #axs[0, 1].hist(final_q[:, 1], 50, density=False)
+    #axs[0, 0].hist2d(big_q[:, -3, 0], big_q[:, -3, 1], bins=(50, 50), cmap=plt.cm.jet)
+    #axs[0, 1].hist2d(big_q[:, -2, 0], big_q[:, -2, 1], bins=(50, 50), cmap=plt.cm.jet)
+    axs[0, 0].hist2d(avx, avy, bins=(50, 50), cmap=plt.cm.jet)
+    axs[0, 1].hist2d(big_q[:, -1, 0], big_q[:, -1, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[1, 0].hist2d(final_q[:, 0], final_q[:, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[1, 1].pcolormesh(x, x, y, cmap=plt.cm.jet)
 
+    
     
     
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
@@ -140,7 +168,14 @@ def main():
     axs2[1, 0].plot(var_q[:, 0])
     axs2[1, 1].plot(var_q[:, 1])
 
+    f, ax = plt.subplots()
+    _, _, _,  bar_container = ax.hist2d(final_q[:, 0], final_q[:, 1], bins=(50, 50))
+    ax.set_ylim(top=100)
+    ani = animation.FuncAnimation(f, prepare_animation(bar_container, big_q), 50, repeat=False, blit=True)
+
+
     #idea: make a plot of the density over an axis as a function of the time
+
 
     plt.show()
 
@@ -160,5 +195,5 @@ def test_f():
 
 
 if __name__=='__main__':
-    #main()
-    test_f()
+    main()
+    #test_f()
