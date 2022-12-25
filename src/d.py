@@ -29,7 +29,7 @@ def Verlet(q0, p0, eps, T, alpha, m):
         t=t+eps
     return q, p
 
-def autocovariance(X):
+def autocovariance(X): # X is only the tail of q after the burn-in
     mu = np.mean(X, axis=0)
     N = len(X[:, 0])
     cov = np.zeros([N, 2])
@@ -43,8 +43,32 @@ def autocovariance(X):
 
 def autocorrelation(autocov, var_q):
     mean_cov = np.mean(autocov, axis = 0)
-    corr = np.divide(mean_cov, (var_q*var_q[-1]))
+    corr = np.divide(mean_cov, (np.sqrt(var_q)*np.sqrt(var_q[-1])))
     return corr
+
+def get_K(autocov): # TODO: adapt function for autocov with 2 dimensions
+    K = None
+    for k in range(int(len(autocov)/2)):
+        if (autocov[2*k] + autocov[2*k+1]) <= 0:
+            K = k
+            break
+    if K is None:
+        K = int(len(autocov)/2-1)
+    return K
+
+def get_sigma(autocov, K):
+    return 0
+
+
+def effective_sample_size(autocov):
+    [n, N] = np.shape(autocov[:, :, 0])
+    ess = np.zeros(n)
+    for i in range(n):
+        K = get_K(autocov)
+        sigma = get_sigma(autocov, K)
+        ess[i]=N*autocov[i, 0, :]/sigma
+    
+    return ess
 
 
 
@@ -55,7 +79,7 @@ def Metropolis_Hastings(q0, N, alpha, sigma):
     rejected = 0
     for i in range(N):
         q_star = np.random.multivariate_normal(mean=q[i, :], cov=sigma*np.eye(2))
-        a = f(q_star, alpha)/np.maximum(f(q[i, :], alpha), np.finfo(np.float64).eps)
+        a = f(q_star, alpha)/np.maximum(f(q[i, :], alpha), np.finfo(np.float64).eps)*(st.norm.pdf(q[i, 0]-q_star[0])*st.norm.pdf(q[i, 1]-q_star[1]))/(st.norm.pdf(q_star[0]-q[i, 0])*st.norm.pdf(q_star[1]-q[i, 1]))
         u = np.random.uniform()
         if (u<a):
             q[i+1, :] = q_star
@@ -109,7 +133,7 @@ def main():
     alpha = 10**2
     m = [1, 1]
     T = 0.10
-    N = 200
+    N = 50
     sigma = 0.1
     
     
@@ -147,25 +171,29 @@ def main():
         y[:, i] = np.exp(-alpha*(x[:]**2+x[i]**2-1/4)**2)
 
 
-    ## Calculate autocorrelation of both chains
-
-    flatt = 20
-    idx = flatt+np.asarray(range(n-flatt))
+    ## Calculate autocorrelation of both chains q(:, 0) and q(:, 1)
+    B = 10
+    idx = B+np.asarray(range(n-B))
     #print(idx)
-    #tail_qx = big_q[idx, :, 0]
-    #tail_qy = big_q[idx, :, 1]
+    tail_qx = big_q[idx, :, 0]
+    tail_qy = big_q[idx, :, 1]
+    tail_q = big_q[idx, :, :]
+    var_tail_q = np.var(tail_q, axis=0)
     print("Calculating covariance...")
-    cov = np.zeros(np.shape(big_q))
-    for i in range(n):
-        cov[i, :, :] = autocovariance(big_q[i, :, :])
+    cov = np.zeros(np.shape(tail_q))
+    for i in range(n-B):
+        cov[i, :, :] = autocovariance(tail_q[i, :, :])
     print("Calculating correlation...")
-    corr = autocorrelation(cov, var_q)
+    corr = autocorrelation(cov, var_tail_q)
+
+
+    ## Calculate effective sample size
 
 
 
 
-    flatt = 20
-    idx = flatt+np.asarray(range(n-flatt))
+    #flatt = 20
+    #idx = flatt+np.asarray(range(n-flatt))
     #print(idx)
     #tail_qx = big_q[idx, :, 0]
     #tail_qy = big_q[idx, :, 1]
@@ -197,10 +225,10 @@ def main():
     axs2[1, 0].plot(exp_q[:, 1])
     axs2[0, 1].plot(var_q[:, 0])
     axs2[1, 1].plot(var_q[:, 1])
-    #axs2[0, 2].plot(np.mean(cov[-1, :, 0], axis=0))
-    #axs2[1, 2].plot(np.mean(cov[-1, :, 1], axis=0))
-    axs2[0, 2].plot(cov[-1, :, 0])
-    axs2[1, 2].plot(cov[-1, :, 1])
+    axs2[0, 2].plot(np.mean(cov[:, :, 0], axis=0))
+    axs2[1, 2].plot(np.mean(cov[:, :, 1], axis=0))
+    #axs2[0, 2].plot(cov[-1, :, 0])
+    #axs2[1, 2].plot(cov[-1, :, 1])
     axs2[0, 3].plot(corr[:, 0])
     axs2[1, 3].plot(corr[:, 1])
 
