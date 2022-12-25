@@ -46,30 +46,29 @@ def autocorrelation(autocov, var_q):
     corr = np.divide(mean_cov, (np.sqrt(var_q)*np.sqrt(var_q[-1])))
     return corr
 
-def get_K(autocov): # TODO: adapt function for autocov with 2 dimensions
-    K = None
-    for k in range(int(len(autocov)/2)):
-        if (autocov[2*k] + autocov[2*k+1]) <= 0:
-            K = k
+def get_M(autocov): # check adaptation of function for  2 dimensions
+    M = None
+    for k in range(int(len(autocov[:, 0])/2)):
+        if ((autocov[2*k, 0] + autocov[2*k+1, 0])<=0) or ((autocov[2*k, 1] + autocov[2*k+1, 1])<=0) :
+            M = 2*k
             break
-    if K is None:
-        K = int(len(autocov)/2-1)
-    return K
+    if M is None:
+        M = int(len(autocov[:, 0])-2)
+    return M
 
-def get_sigma(autocov, K):
-    return 0
+def get_sigma(autocov): # To check (difference between serie 13 and lecture notes)
+    M = get_M(autocov)
+    id = range(1, M)
+    return -autocov[0, :] + 2*np.sum(autocov[id, :], axis=0)
 
 
 def effective_sample_size(autocov):
-    [n, N] = np.shape(autocov[:, :, 0])
-    ess = np.zeros(n)
+    [n, N] = np.shape(autocov[ :, 0])
+    ess = np.zeros([n, 2])
     for i in range(n):
-        K = get_K(autocov)
-        sigma = get_sigma(autocov, K)
-        ess[i]=N*autocov[i, 0, :]/sigma
-    
+        sigma = get_sigma(autocov[i, :, :])
+        ess[i, :]=N*np.divide(autocov[i, 0, :], sigma)
     return ess
-
 
 
 def Metropolis_Hastings(q0, N, alpha, sigma):
@@ -122,18 +121,18 @@ def prepare_animation(bar_container):
         return bar_container.patches
     
     return animate
-
-
-        
-  
+   
+## number of evaluation of f and df/dqi
+## RWMH: n*N*2
+## HMC: n*N*(2+floor(T/eps)*4)
 
 def main():
     q0 = [0.0, 0.0] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
     eps = 0.01
     alpha = 10**2
     m = [1, 1]
-    T = 0.10
-    N = 50
+    T = 0.20
+    N = 100
     sigma = 0.1
     
     
@@ -148,7 +147,7 @@ def main():
 
     
     for i in range(n):
-        #q0 = [0.5, 0.5]+np.random.normal(size=2)/2
+        q0 = [0.5, 0.5]+np.random.normal(size=2)/6
         q_ham, _ = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, ratio[i] = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
@@ -172,25 +171,29 @@ def main():
 
 
     ## Calculate autocorrelation of both chains q(:, 0) and q(:, 1)
-    B = 10
-    idx = B+np.asarray(range(n-B))
+    B = 50
+    idx = B+np.asarray(range(N-B))
     #print(idx)
-    tail_qx = big_q[idx, :, 0]
-    tail_qy = big_q[idx, :, 1]
-    tail_q = big_q[idx, :, :]
+    tail_qx = big_q[:, idx, 0]
+    tail_qy = big_q[:, idx, 1]
+    tail_q = big_q[:, idx, :]
     var_tail_q = np.var(tail_q, axis=0)
     print("Calculating covariance...")
     cov = np.zeros(np.shape(tail_q))
-    for i in range(n-B):
+    for i in range(n):
         cov[i, :, :] = autocovariance(tail_q[i, :, :])
     print("Calculating correlation...")
     corr = autocorrelation(cov, var_tail_q)
 
 
     ## Calculate effective sample size
-
-
-
+    print("Calculating ESS...")
+    ESS = effective_sample_size(cov)
+    ESS = np.sort(ESS, axis=0)
+    id_min_ESS = int(np.floor(n/20))
+    id_ESS = id_min_ESS+np.asarray(range(n-2*id_min_ESS))
+    ESS_reduced = ESS[id_ESS, :]
+    
 
     #flatt = 20
     #idx = flatt+np.asarray(range(n-flatt))
@@ -225,13 +228,17 @@ def main():
     axs2[1, 0].plot(exp_q[:, 1])
     axs2[0, 1].plot(var_q[:, 0])
     axs2[1, 1].plot(var_q[:, 1])
-    axs2[0, 2].plot(np.mean(cov[:, :, 0], axis=0))
-    axs2[1, 2].plot(np.mean(cov[:, :, 1], axis=0))
-    #axs2[0, 2].plot(cov[-1, :, 0])
-    #axs2[1, 2].plot(cov[-1, :, 1])
+    #axs2[0, 2].plot(np.mean(cov[:, :, 0], axis=0))
+    #axs2[1, 2].plot(np.mean(cov[:, :, 1], axis=0))
+    axs2[0, 2].plot(cov[-1, :, 0])
+    axs2[1, 2].plot(cov[-1, :, 1])
     axs2[0, 3].plot(corr[:, 0])
     axs2[1, 3].plot(corr[:, 1])
 
+
+    fig, ax3 = plt.subplots(1, 2)
+    ax3[0].hist(ESS_reduced[:, 0], 50, density=False)
+    ax3[1].hist(ESS_reduced[:, 1], 50, density=False)
 
 
     #f, ax = plt.subplots()
