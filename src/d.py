@@ -112,7 +112,7 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
     accepted = 0
     rejected = 0
     for i in range(N):
-        p = st.norm.rvs(loc=0, scale=m)
+        p = st.norm.rvs(loc=0, scale=np.sqrt(m))
         q_star, p_star = Verlet(q[i, :], p, T, eps, alpha, m)
         u = np.random.uniform()
         if (u<np.exp(-U(q_star, alpha)+U(q[i, :], alpha)-K(p_star, m)+K(p, m))):
