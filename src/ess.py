@@ -6,20 +6,20 @@ def main():
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    number = 11
+    number = 100
 
     #N = 80 #length of the chain
-    vector_N = np.ndarray.astype(np.floor(np.linspace(100, 400, number)), dtype=int)
+    vector_N = np.ndarray.astype(np.floor(np.linspace(30, 300, number)), dtype=int)
 
-    n = 20
+    n = 1
     #vector_n = np.ndarray.astype(np.floor(np.linspace(200, 1000, number)), dtype=int) #number of chains simulated
     
     eps = 0.01
     m = [1, 1]
-    T = 0.04
+    T = 0.05
     
     sigma = 0.1
-    
+
 
     ESS = np.zeros(number)
     ESS_ham = np.zeros(number)
@@ -27,7 +27,7 @@ def main():
     k=0
 
     for N in vector_N:
-        B = int(np.floor(N/10))
+        B = 15
         big_q = np.zeros([n, N+1, 2])
         big_q_ham = np.zeros([n, N+1, 2])
         for i in range(n):
@@ -45,7 +45,7 @@ def main():
         #print(idx)
         tail_q = big_q[:, idx, :]
         tail_q_ham = big_q_ham[:, idx, :]
-        
+
 
         cov = np.zeros(np.shape(tail_q))
         cov_ham = np.zeros(np.shape(tail_q_ham))
@@ -62,8 +62,8 @@ def main():
         k=k+1
 
     fig, ax = plt.subplots(1, 2)
-    ax[0].plot(2*n*2*vector_N, ESS)
-    ax[1].plot(n*(2+np.floor(T/eps)*4*vector_N), ESS_ham)
+    ax[0].plot(2*2*vector_N, ESS)
+    ax[1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham)
     ax[0].set_title("ESS, RWMH")
     ax[1].set_title("ESS, HMC")
 
