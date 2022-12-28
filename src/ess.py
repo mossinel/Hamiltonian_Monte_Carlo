@@ -6,12 +6,12 @@ def main():
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    number = 100
+    number = 20
 
     #N = 80 #length of the chain
     vector_N = np.ndarray.astype(np.floor(np.linspace(30, 300, number)), dtype=int)
 
-    n = 1
+    n = 50
     #vector_n = np.ndarray.astype(np.floor(np.linspace(200, 1000, number)), dtype=int) #number of chains simulated
     
     eps = 0.01
@@ -66,6 +66,10 @@ def main():
     ax[1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham)
     ax[0].set_title("ESS, RWMH")
     ax[1].set_title("ESS, HMC")
+    ax[0].set_xlabel("Nb of evaluation of f and df/dqi")
+    ax[0].set_ylabel("Effective sample size")
+    ax[1].set_xlabel("Nb of evaluation of f and df/dqi")
+    ax[1].set_ylabel("Effective sample size")
 
     plt.show()
 
