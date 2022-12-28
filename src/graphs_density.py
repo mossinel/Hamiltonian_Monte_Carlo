@@ -3,8 +3,8 @@ from d import*
 
 
 
-def main():
-
+def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False):
+    '''
     alpha = 10**1
     q0 = [0, 0]
     q0_type = "Dirac" # Dirac or Normal
@@ -13,15 +13,15 @@ def main():
     N = 100 #length of the chain
     n = 2000 #number of chains simulated
     
-    eps = 0.05
-    m = [5, 5]
-    T = 0.5
+    eps = 0.01
+    m = [1, 1]
+    T = 0.1
     
     sigma = 0.1
     
     B = 20
 
-    
+    '''
     final_q = np.zeros([n, 2])
     final_q_ham = np.zeros([n, 2])
     ratio = np.zeros(n)
@@ -75,25 +75,56 @@ def main():
 
     
 
-    
 
-    fig, ax1 =plt.subplots(1, 2)
-    ax1[0].hist2d(big_q[:, -1, 0], big_q[:, -1, 1], bins=(50, 50), cmap=plt.cm.jet)
-    ax1[1].hist2d(big_q_ham[:, -1, 0], big_q_ham[:, -1, 1], bins=(50, 50), cmap=plt.cm.jet)
-    ax1[0].set_title("RWMC")
-    ax1[1].set_title("HMC")
+    if "Density_end" in plot:
+        fig1, ax1 =plt.subplots(1, 2, figsize=(8, 4))
+        ax1[0].hist2d(big_q[:, -1, 0], big_q[:, -1, 1], range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        ax1[1].hist2d(big_q_ham[:, -1, 0], big_q_ham[:, -1, 1], range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        ax1[0].set_title("RWMC")
+        ax1[1].set_title("HMC")
+        ax1[0].set_xlabel("q[0]")
+        ax1[1].set_xlabel("q[0]")
+        ax1[0].set_ylabel("q[1]")
+        ax1[1].set_ylabel("q[1]")
+        fig1.tight_layout()
+        
 
+    if "Density_all" in plot:
+        fig2, ax2 = plt.subplots(1, 3, figsize=(12,4))
+        ax2[0].hist2d(avx, avy, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        ax2[1].hist2d(avx_ham, avy_ham, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        ax2[2].pcolormesh(x, x, y, cmap=plt.cm.jet)
+        ax2[0].set_title("RWMC")
+        ax2[1].set_title("HMC")
+        ax2[2].set_title("Theoretical")
+        ax2[0].set_xlabel("q[0]")
+        ax2[1].set_xlabel("q[0]")
+        ax2[2].set_xlabel("q[0]")
+        ax2[0].set_ylabel("q[1]")
+        ax2[1].set_ylabel("q[1]")
+        ax2[2].set_ylabel("q[1]")
+        fig2.tight_layout()
 
-    fig, ax2 = plt.subplots(1, 3)
-    ax2[0].hist2d(avx, avy, bins=(50, 50), cmap=plt.cm.jet)
-    ax2[1].hist2d(avx_ham, avy_ham, bins=(50, 50), cmap=plt.cm.jet)
-    ax2[2].pcolormesh(x, x, y, cmap=plt.cm.jet)
-    ax2[0].set_title("RWMC")
-    ax2[1].set_title("HMC")
-    ax2[2].set_title("Theoretical")
+    if "RWMH" in plot:
+        fig, ax = plt.subplots(1, 1, figsize=(4,4))
+        ax.hist2d(avx, avy, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        ax.set_title("RWMC")
+        ax.set_xlabel("q[0]")
+        ax.set_ylabel("q[1]")
+        fig.tight_layout()
+
+    if "HMC" in plot:
+        figh, axh = plt.subplots(1, 1, figsize=(4,4))
+        axh.hist2d(avx_ham, avy_ham, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
+        axh.set_title("HMC")
+        axh.set_xlabel("q[0]")
+        axh.set_ylabel("q[1]")
+        figh.tight_layout()
+
 
     print("Ratio RWMH: ", np.mean(ratio))
     print("Ratio HMX: ", np.mean(ratio_ham))
+
 
     
 
@@ -103,4 +134,59 @@ def main():
 
 
 if __name__=="__main__":
-    main()
+
+    alpha = 10**3
+    q0 = [0, 0]
+    q0_type = "Dirac" # Dirac or Normal
+    offset = False #Offset of q0 [0.5, 0.5]
+
+    N = 200 #length of the chain
+    n = 1000 #number of chains simulated
+    
+    eps = 0.01
+    m = [1, 1]
+    T = 0.1
+    
+    sigma = 0.1
+    
+    B = 80
+
+    plot=["Density_all"]
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    m = [5, 5]
+    T = 0.5
+    plot="HMC"
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    m = [10, 1]
+    T = 0.1
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    m = [5, 5]
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    eps=0.05
+    T = 0.5
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    T=0.1
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+    plot=["RWMH"]
+    sigma=0.4
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+    
+    sigma=0.02
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+
+
+
+
+
+
+
+
+
+
+

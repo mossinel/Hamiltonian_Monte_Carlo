@@ -78,10 +78,11 @@ def get_sigma(autocov): # To check (difference between serie 13 and lecture note
 
 
 def effective_sample_size(autocov):
-    [n, N] = np.shape(autocov[ :, 0])
+    [n, N] = np.shape(autocov[:, :, 0])
     ess = np.zeros([n, 2])
     for i in range(n):
         sigma = get_sigma(autocov[i, :, :])
+        #print("Sigma=", sigma, ", c0=", autocov[i, 0, :], ", N=", N)
         ess[i, :]=N*np.divide(autocov[i, 0, :], sigma)
     return ess
 
