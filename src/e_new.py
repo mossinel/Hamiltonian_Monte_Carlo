@@ -28,14 +28,14 @@ def log_posterior(q, X, y, sigma=1000):
 
     return (
         q @ X.T @ (y.T - np.ones(n))
-        - np.ones((n, 1)) * (np.log(1 / logistic(-X @ q)))
-        - q.T @ q / (2 * sigma * sigma)
+        - np.ones(n) @ (np.log(1 / logistic(-X @ q)))
+        - q.T @ q / (2 * sigma)
     )
 
 
 def dU(X, y, q, sigma):
     grad = (
-        X.T @ (y.T - np.ones(y.shape[0]))
+        X.T @ (y - np.ones(y.shape[0]))
         + X.T @ (np.exp(-X @ q) / (logistic(-X @ q)))
         - q / sigma
     )
@@ -46,46 +46,47 @@ def K(p, sigma=1000):
     return np.sum(1 / 2 * np.divide(p * p, sigma))
 
 
-def Verlet(q0, p0, eps, T, m, X, y, sigma):
+def Verlet(q0, p0, eps, T, X, y, sigma):
     t = 0
     q = q0
     p = p0
     while t < T:
         p_tmp = p - eps / 2 * dU(X, y, q, sigma)
-        q = q + eps * np.divide(p_tmp, m)
+        q = q + eps * np.divide(p_tmp, sigma)
         p = p_tmp - eps / 2 * dU(X, y, q, sigma)
         t = t + eps
     return q, p
 
 
-def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
+def Hamiltonian_Monte_Carlo(q0, N, T, eps, X, y, sigma):
     # taken from "d.py"
-    q = np.zeros([q0.shape[0], N + 1])
-    q[:, 0] = q0[:, 0]
+    q = np.zeros([N + 1, q0.shape[1]])
+    q[0, :] = q0[0, :]
     accepted = 0
     rejected = 0
     for i in range(N):
-        p = st.norm.rvs(loc=0, scale=np.sqrt(sigma))
-        print(p)
-        q_star, p_star = Verlet(q[:, i], p, T, eps, m, X, y, sigma)
-        print(p_star)
+        p = st.norm.rvs(
+            loc=0, scale=np.sqrt(np.ones(q0.shape[0]) * np.sqrt(sigma))
+        )
+        q_star, p_star = Verlet(q[i, :], p, T, eps, X, y, sigma)
+
         u = np.random.uniform()
-        print((-log_posterior(q_star, X, y, sigma)).shape)
-        print(+log_posterior(q[:, i], X, y, sigma))
-        print(K(p_star, sigma))
+        # print((-log_posterior(q_star, X, y, sigma)).shape)
+        # print(+log_posterior(q[i,:], X, y, sigma))
+        # print(K(p_star, sigma))
         # print(+K(prior(q0.shape[0], sigma), sigma))
         if u < np.exp(
             -log_posterior(q_star, X, y, sigma)
-            + log_posterior(q[:, i], X, y, sigma)
+            + log_posterior(q[i, :], X, y, sigma)
             - K(p_star, sigma)
-            + K(prior(q0.shape[0], sigma), sigma)
+            + K(p, sigma)
         ):
-            q[:, i + 1] = q_star
+            q[i + 1, :] = q_star
             accepted = accepted + 1
         else:
-            q[:, i + 1] = q[:, i]
+            q[i + 1, :] = q[i, :]
             rejected = rejected + 1
-            # print("Problem")
+            print(f"Problem:{i+1}")
     ratio = accepted / (accepted + rejected)
     return q, ratio
 
@@ -101,11 +102,11 @@ if __name__ == "__main__":
     y = X[:, 1]
     X = np.c_[np.ones((X.shape[0], 1)), X[:, 2:-1]]
 
-    q0 = np.zeros((X.shape[1], 1))
-    eps = 0.01
-    m = np.ones(X.shape[1])
+    q0 = np.ones((1, X.shape[1]))
+    eps = 0.001
+    # m = np.ones(X.shape[1])
     T = 0.10
     N = 80
     sigma = 1000
 
-    (q, ratio) = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma)
+    (q, ratio) = Hamiltonian_Monte_Carlo(q0, N, T, eps, X, y, sigma)
