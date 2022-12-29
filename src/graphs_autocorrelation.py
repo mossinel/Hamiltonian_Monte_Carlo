@@ -11,7 +11,7 @@ def main():
     offset = False #Offset of q0 [0.5, 0.5]
 
     N = 100 #length of the chain
-    n = 2000 #number of chains simulated
+    n = 1000 #number of chains simulated
     
     eps = 0.01
     m = [1, 1]
@@ -80,8 +80,8 @@ def main():
     avy_ham = np.reshape(tail_qy_ham, -1)
 
     print("Calculating covariance...")
-    cov = np.zeros(np.shape(tail_q))
-    cov_ham = np.zeros(np.shape(tail_q_ham))
+    cov = np.zeros([n, len(idx)-1, 2])
+    cov_ham = np.zeros([n, len(idx)-1, 2])
     for i in range(n):
         cov[i, :, :] = autocovariance(tail_q[i, :, :])
         cov_ham[i, :, :] = autocovariance(tail_q_ham[i, :, :])
@@ -109,8 +109,8 @@ def main():
     
     fig, ax0 = plt.subplots(2, 2)
     ax0[0, 0].plot(exp_q[:, 0], label="RWMH")
-    ax0[1, 0].plot(exp_q[:, 1], label="RWMH")
-    ax0[0, 1].plot(var_q[:, 0], label="RWMH")
+    ax0[0, 1].plot(exp_q[:, 1], label="RWMH")
+    ax0[1, 0].plot(var_q[:, 0], label="RWMH")
     ax0[1, 1].plot(var_q[:, 1], label="RWMH")
     ax0[0, 0].set_title("Average q[0](t)")
     ax0[0, 1].set_title("Average q[1](t)")
@@ -119,8 +119,8 @@ def main():
 
     #fig, ax0_ham = plt.subplots(2, 2)
     ax0[0, 0].plot(exp_q_ham[:, 0], label="HMC")
-    ax0[1, 0].plot(exp_q_ham[:, 1], label="HMC")
-    ax0[0, 1].plot(var_q_ham[:, 0], label="HMC")
+    ax0[0, 1].plot(exp_q_ham[:, 1], label="HMC")
+    ax0[1, 0].plot(var_q_ham[:, 0], label="HMC")
     ax0[1, 1].plot(var_q_ham[:, 1], label="HMC")
     ax0[0, 0].legend()
     ax0[0, 1].legend()

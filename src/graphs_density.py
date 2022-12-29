@@ -135,12 +135,12 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
 
 if __name__=="__main__":
 
-    alpha = 10**3
+    alpha = 10**1
     q0 = [0, 0]
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    N = 200 #length of the chain
+    N = 100 #length of the chain
     n = 1000 #number of chains simulated
     
     eps = 0.01
@@ -149,8 +149,8 @@ if __name__=="__main__":
     
     sigma = 0.1
     
-    B = 80
-
+    B = 20
+    
     plot=["Density_all"]
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
@@ -172,7 +172,7 @@ if __name__=="__main__":
 
     T=0.1
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
-
+    
     plot=["RWMH"]
     sigma=0.4
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)

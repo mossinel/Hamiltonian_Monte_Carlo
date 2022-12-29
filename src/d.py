@@ -43,12 +43,12 @@ def Verlet(q0, p0, eps, T, alpha, m):
 def autocovariance(X): # X is only the tail of q after the burn-in
     mu = np.mean(X, axis=0)
     N = len(X[:, 0])
-    cov = np.zeros([N, 2])
-    corr = 0
-    for k in range(N):
-        for i in range(N-k):
+    cov = np.zeros([N-1, 2])
+    
+    for k in range(N-1):
+        for i in range(N-k-1):
             cov[k, :] += ((X[i+k, :])-mu)*(X[i, :]-mu)
-        cov[k, :] = (1/(N-1))*cov[k, :]
+        cov[k, :] = (1/(N-k-1))*cov[k, :]
         
     return cov
 
@@ -62,19 +62,31 @@ def autocorrelation(autocov):
     return corr
 
 def get_M(autocov): # check adaptation of function for  2 dimensions
-    M = None
+    M1 = None
     for k in range(int(len(autocov[:, 0])/2)):
-        if ((autocov[2*k, 0] + autocov[2*k+1, 0])<=0) or ((autocov[2*k, 1] + autocov[2*k+1, 1])<=0) :
-            M = 2*k
+        if ((autocov[2*k, 0] + autocov[2*k+1, 0])<=0):
+            M1 = 2*k
             break
-    if M is None:
-        M = int(len(autocov[:, 0])-2)
-    return M
+    if M1 is None:
+        M1 = int(len(autocov[:, 0])-2)
+    M2 = None
+    for k in range(int(len(autocov[:, 1])/2)):
+        if ((autocov[2*k, 1] + autocov[2*k+1, 1])<=0) :
+            M2 = 2*k
+            break
+    if M2 is None:
+        M2 = int(len(autocov[:, 0])-2)
+    
+    return M1, M2
 
 def get_sigma(autocov): # To check (difference between serie 13 and lecture notes)
-    M = get_M(autocov)
-    id = range(1, M)
-    return autocov[0, :] + 2*np.sum(autocov[id, :], axis=0)
+    [M1, M2] = get_M(autocov)
+    id1 = range(1, M1)
+    S1 = autocov[0, 0] + 2*np.sum(autocov[id1, 0])
+    id2 = range(1, M2)
+    S2 = autocov[0, 1] + 2*np.sum(autocov[id2, 1])
+
+    return [S1, S2]
 
 
 def effective_sample_size(autocov):
@@ -83,7 +95,7 @@ def effective_sample_size(autocov):
     for i in range(n):
         sigma = get_sigma(autocov[i, :, :])
         #print("Sigma=", sigma, ", c0=", autocov[i, 0, :], ", N=", N)
-        ess[i, :]=N*np.divide(autocov[i, 0, :], sigma)
+        ess[i, :] = N*np.divide(autocov[i, 0, :], sigma)
     return ess
 
 
@@ -114,7 +126,7 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
     rejected = 0
     for i in range(N):
         p = st.norm.rvs(loc=0, scale=np.sqrt(m))
-        q_star, p_star = Verlet(q[i, :], p, T, eps, alpha, m)
+        q_star, p_star = Verlet(q[i, :], p, eps, T, alpha, m)
         u = np.random.uniform()
         if (u<np.exp(-U(q_star, alpha)+U(q[i, :], alpha)-K(p_star, m)+K(p, m))):
             q[i+1, :] = q_star
