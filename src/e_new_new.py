@@ -18,7 +18,7 @@ def prior(p, sigma=1000):
 
 def log_posterior(q, X, y, sigma=1000):
     """
-    q : column vector
+    q : row vector
     y : label
     X : matrix n x (p+1)
     sigma : variance (scalar)
@@ -26,19 +26,21 @@ def log_posterior(q, X, y, sigma=1000):
 
     n, p = (X.shape[0], X.shape[1] - 1)
 
-    return (
-        q @ X.T @ (y.T - np.ones(n))
-        - np.ones(n) @ (np.log(1 / logistic(X @ q)))
-        - q.T @ q / (2 * sigma)
+    return q @ X.T @ (y.T - np.ones(n)) - np.ones(n) @ (
+        np.log1p(np.exp(-X @ q)) - q @ q.T / (2 * sigma)
     )
 
 
 def grad_log(X, y, q, sigma):
-    grad = (
-        X.T @ (y - np.ones(y.shape[0]))
-        + X.T @ (np.exp(-X @ q) / (logistic(X @ q)))
-        - q / sigma
-    )
+    value = np.exp(-X @ q)
+    place = np.where(value == np.inf)[0]
+    print(value)
+    value = value / (1 + value)
+    value[place] = 1.0
+
+    grad = X.T @ (y - np.ones(y.shape[0]) + value) - q / sigma
+    print("----------")
+    print(value)
     return grad
 
 
@@ -52,14 +54,14 @@ def Verlet(q0, m, p0, eps, T, X, y, sigma):
     p = p0
     while t < T:
         p_tmp = p + eps / 2 * grad_log(X, y, q, sigma)
-        # print(p_tmp)
+        print(p_tmp)
         q = q + eps * np.divide(p_tmp, m)
-        # print("--")
-        # print(q)
+        print("--")
+        print(q)
         p = p_tmp + eps / 2 * grad_log(X, y, q, sigma)
-        # print(grad_log(X, y, q, sigma))
-        # print("--")
-        # print(p)
+        print(grad_log(X, y, q, sigma))
+        print("--")
+        print(p)
         t = t + eps
     return q, p
 
@@ -86,8 +88,10 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
         # print(-K(p_star, m))
         # print(+K(p, m))
         if u < np.exp(
-            -log_posterior(q_star, X, y, sigma)
-            + log_posterior(q[i, :], X, y, sigma)
+            log_posterior(q_star, X, y, sigma)
+            - log_posterior(
+                q[i, :], X, y, sigma
+            )  # signs?? see page 12 MC on R
             - K(p_star, m)
             + K(p, m)
         ):
@@ -143,11 +147,11 @@ if __name__ == "__main__":
 
     X, y = dataset_import()
 
-    q0 = np.ones((1, X.shape[1]))
-    eps = 0.01
+    q0 = np.zeros((1, X.shape[1]))
+    eps = 0.05
     m = np.ones(X.shape[1])
     T = 0.10
-    N = 80
+    N = 5
     sigma = 1000
 
     (q, ratio) = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma)
