@@ -4,8 +4,7 @@ import scipy.stats as st
 import matplotlib.pyplot as plt
 import numpy as np
 
-# https://cran.r-project.org/web/packages/hmclearn/vignettes/logistic_regression_hmclearn.html
-
+# CODE WITH SPLITTED CONTINUOUS AND CATEGORICAL FEATURES
 logistic = lambda z: 1 / (1 + np.exp(-z))
 
 
@@ -75,18 +74,13 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
     for i in range(N):
         # p = st.norm.rvs(loc=0, scale=np.sqrt(np.ones(q0.shape[0]) * np.sqrt(sigma)))
         p = st.norm.rvs(loc=0, scale=np.sqrt(m))
-        # print(m)
 
         q_star, p_star = Verlet(
             q0=q[i, :], m=m, p0=p, eps=eps, T=T, X=X, y=y, sigma=sigma
         )
-        # print(q_star)
-        # print(p_star)
+
         u = np.random.uniform()
-        # print(-log_posterior(q_star, X, y, sigma))
-        # print(+log_posterior(q[i, :], X, y, sigma))
-        # print(-K(p_star, m))
-        # print(+K(p, m))
+
         if u < np.exp(
             log_posterior(q_star, X, y, sigma)
             - log_posterior(
@@ -139,21 +133,35 @@ def dataset_import():
     # normalization
     X[:, 1] = (X[:, 1] - np.mean(X[:, 1])) / np.std(X[:, 1])
     X[:, 2] = (X[:, 2] - np.mean(X[:, 2])) / np.std(X[:, 2])
+
     return X, y
 
 
 if __name__ == "__main__":
 
-    # ATTENTION: X should be modified. It is not the same as the one described in the project text
-    # for example, race column is only one, not 2
-
     X, y = dataset_import()
 
     q0 = np.zeros((1, X.shape[1]))
-    eps = 0.05
+    eps_continuous = 0.1
+    eps_categorical = 0.05
+    eps = [eps_continuous, eps_categorical]
     m = np.ones(X.shape[1])
     T = 0.10
     N = 500
     sigma = 1000
 
-    (q, ratio) = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma)
+    X_cat = np.c_[X[:, 0], X[:, 3:]]
+    X_con = X[:, 1:3]
+    (q_cont, ratio_cont) = Hamiltonian_Monte_Carlo(
+        q0[:, 1:3], m[1:3], N, T, eps[0], X_con, y, sigma
+    )
+    (q_cat, ratio_cat) = Hamiltonian_Monte_Carlo(
+        np.c_[q0[:, 0], q0[:, 3:]],
+        np.concatenate(([m[0]], m[3:])),
+        N,
+        T,
+        eps[1],
+        X_cat,
+        y,
+        sigma,
+    )
