@@ -65,7 +65,7 @@ def Verlet(q0, m, p0, eps, T, X, y, sigma):
     return q, p
 
 
-def Gibbs(q0, N, alpha, sigma):
+def Gibbs(q0, N, sigma):
     q = np.zeros([N + 1, q0.shape[1]])
     q[0, :] = q0
 
@@ -155,26 +155,12 @@ if __name__ == "__main__":
     X, y = dataset_import()
 
     q0 = np.zeros((1, X.shape[1]))
-    eps_continuous = 0.1
-    eps_categorical = 0.05
-    eps = [eps_continuous, eps_categorical]
+    # eps_continuous = 0.1
+    # eps_categorical = 0.05
+    # eps = [eps_continuous, eps_categorical]
     m = np.ones(X.shape[1])
     T = 0.10
-    N = 500
+    N = 5000
     sigma = 1000
 
-    X_cat = np.c_[X[:, 0], X[:, 3:]]
-    X_con = X[:, 1:3]
-    (q_cont, ratio_cont) = Hamiltonian_Monte_Carlo(
-        q0[:, 1:3], m[1:3], N, T, eps[0], X_con, y, sigma
-    )
-    (q_cat, ratio_cat) = Hamiltonian_Monte_Carlo(
-        np.c_[q0[:, 0], q0[:, 3:]],
-        np.concatenate(([m[0]], m[3:])),
-        N,
-        T,
-        eps[1],
-        X_cat,
-        y,
-        sigma,
-    )
+    q = Gibbs(q0, N, sigma)
