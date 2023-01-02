@@ -52,11 +52,11 @@ def autocovariance(X): # X is only the tail of q after the burn-in
         
     return cov
 
-def autocorrelation(autocov):
+def autocorrelation(autocov):   
     corr = np.zeros(np.shape(autocov))
     for i in range(int(len(autocov[0, :, 0]))):
-        corr[:, i, 0] = np.divide(autocov[:, i, 0], autocov[:, 0, 0])
-        corr[:, i, 1] = np.divide(autocov[:, i, 1], autocov[:, 0, 1])
+        corr[:, i, 0] = np.divide(autocov[:, i, 0], np.maximum(np.abs(autocov[:, 0, 0]), np.finfo(np.float64).eps))
+        corr[:, i, 1] = np.divide(autocov[:, i, 1], np.maximum(np.abs(autocov[:, 0, 1]), np.finfo(np.float64).eps))
     #corr_2 = np.divide(autocov[:, :, 1], autocov[:, 0, 1])
     #corr = np.concatenate(corr_1, corr_2, axis=2)
     return corr
@@ -70,12 +70,12 @@ def get_M(autocov): # check adaptation of function for  2 dimensions
     if M1 is None:
         M1 = int(len(autocov[:, 0])-2)
     M2 = None
-    for k in range(int(len(autocov[:, 1])/2)):
-        if ((autocov[2*k, 1] + autocov[2*k+1, 1])<=0) :
-            M2 = 2*k
+    for j in range(int(len(autocov[:, 1])/2)):
+        if ((autocov[2*j, 1] + autocov[2*j+1, 1])<=0) :
+            M2 = 2*j
             break
     if M2 is None:
-        M2 = int(len(autocov[:, 0])-2)
+        M2 = int(len(autocov[:, 1])-2)
     
     return M1, M2
 
@@ -95,7 +95,9 @@ def effective_sample_size(autocov):
     for i in range(n):
         sigma = get_sigma(autocov[i, :, :])
         #print("Sigma=", sigma, ", c0=", autocov[i, 0, :], ", N=", N)
-        ess[i, :] = N*np.divide(autocov[i, 0, :], sigma)
+        ess[i, 0] = N*np.divide(autocov[i, 0, 0], np.maximum(sigma[0],  np.finfo(np.float64).eps))
+        ess[i, 1] = N*np.divide(autocov[i, 0, 1], np.maximum(sigma[1],  np.finfo(np.float64).eps))
+
     return ess
 
 
@@ -146,11 +148,11 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
 def main():
     q0 = [0.0, 0.0] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
     eps = 0.01
-    alpha = 10**1
+    alpha = 10**3
     m = [1, 1]
-    T = 0.10
-    N = 80
-    sigma = 0.1
+    T = 0.1
+    N = 100
+    sigma = 0.4
     
     
     n = 1000
@@ -165,7 +167,7 @@ def main():
 
     
     for i in range(n):
-        q0 = [0.5, 0.5]+np.random.normal(size=2)/2
+        #q0 = [0.5, 0.5]+np.random.normal(size=2)/2
         q_ham, ratio[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, _ = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
@@ -203,7 +205,7 @@ def main():
     tail_q_ham = big_q_ham[:, idx, :]
     var_tail_q = np.var(tail_q, axis=0)
     print("Calculating covariance...")
-    cov = np.zeros(np.shape(tail_q))
+    cov = np.zeros([n, len(idx)-1, 2])
     for i in range(n):
         cov[i, :, :] = autocovariance(tail_q[i, :, :])
     print("Calculating correlation...")

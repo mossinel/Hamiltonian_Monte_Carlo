@@ -141,17 +141,17 @@ if __name__=="__main__":
     offset = False #Offset of q0 [0.5, 0.5]
 
     N = 100 #length of the chain
-    n = 1000 #number of chains simulated
+    n = 2000 #number of chains simulated
     
     eps = 0.01
-    m = [1, 1]
+    m = [0.1, 0.1]
     T = 0.1
     
     sigma = 0.1
     
     B = 20
     
-    plot=["Density_all"]
+    plot=["Density_all", "Density_end", "HMC"]
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
     m = [5, 5]

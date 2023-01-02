@@ -1,25 +1,27 @@
 from d import*
 
 def main():
-    alpha = 10**1
+    alpha = 10**3
     q0 = [0, 0]
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    number = 20
+    number = 11 # 16
 
     #N = 80 #length of the chain
-    vector_N = np.ndarray.astype(np.floor(np.linspace(30, 200, number)), dtype=int)
+    vector_N = np.ndarray.astype(np.floor(np.linspace(70, 470, number)), dtype=int)
+    vector_N2 = 20*vector_N
     #vector_N =np.asarray([50, 50, 50])
     #print(vector_N)
 
-    n = 50
+    n = 1 #200
     #vector_n = np.ndarray.astype(np.floor(np.linspace(200, 1000, number)), dtype=int) #number of chains simulated
     
     eps = 0.01
-    m = [1, 1]
-    T = 0.05
+    m = [0.1, 0.1]
+    T = 0.2
     
+
     sigma = 0.1
 
 
@@ -29,27 +31,28 @@ def main():
     k=0
 
     for N in vector_N:
-        B = 15
-        big_q = np.zeros([n, N+1, 2])
+        B = 50
+        big_q = np.zeros([n, vector_N2[k]+1, 2])
         big_q_ham = np.zeros([n, N+1, 2])
         for i in range(n):
             if (q0_type=="Normal"):
                 q0 = np.random.normal(size=2)/4
             if offset:
-                q0 = q0+[0.5, 0.5]
+                q0 = q0+np.asarray([0.5, 0.5])
             q_ham, _ = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
-            q, _ = Metropolis_Hastings(q0, N, alpha, sigma)
+            q, _ = Metropolis_Hastings(q0, vector_N2[k], alpha, sigma)
             
             big_q[i, :, :] = q
             big_q_ham[i, :, :] = q_ham
         
         idx = B+np.asarray(range(N-B))
+        idx_2 = B+np.asarray(range(vector_N2[k]-B))
         #print(idx)
-        tail_q = big_q[:, idx, :]
+        tail_q = big_q[:, idx_2, :]
         tail_q_ham = big_q_ham[:, idx, :]
 
 
-        cov = np.zeros([n, len(idx)-1, 2])
+        cov = np.zeros([n, len(idx_2)-1, 2])
         #print(np.shape(cov))
         cov_ham = np.zeros([n, len(idx)-1, 2])
         for i in range(n):
@@ -65,8 +68,8 @@ def main():
         k=k+1
 
     fig, ax = plt.subplots(2, 2)
-    ax[0, 0].plot(2*2*vector_N, ESS[:, 0])
-    ax[0, 1].plot(2*2*vector_N, ESS[:, 1])
+    ax[0, 0].plot(2*2*vector_N2, ESS[:, 0])
+    ax[0, 1].plot(2*2*vector_N2, ESS[:, 1])
     ax[1, 0].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 0])
     ax[1, 1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 1])
     ax[0, 0].set_title("ESS q[0], RWMH")

@@ -5,21 +5,21 @@ from d import*
 
 def main():
 
-    alpha = 10**1
+    alpha = 10**3
     q0 = [0, 0]
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    N = 100 #length of the chain
-    n = 1000 #number of chains simulated
+    N = 200 #length of the chain
+    n = 100 #number of chains simulated
     
     eps = 0.01
-    m = [1, 1]
+    m = [0.1, 0.1]
     T = 0.1
     
     sigma = 0.1
     
-    B = 20
+    B = 50
     
     final_q = np.zeros([n, 2])
     final_q_ham = np.zeros([n, 2])
@@ -34,9 +34,9 @@ def main():
     
     for i in range(n):
         if (q0_type=="Normal"):
-            q0 = np.random.normal(size=2)/4
+            q0 = np.random.normal(size=2)/2
         if offset:
-            q0 = q0+[0.5, 0.5]
+            q0 = q0+np.asarray([0.5, 0.5])
         q_ham, ratio_ham[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, ratio[i] = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
