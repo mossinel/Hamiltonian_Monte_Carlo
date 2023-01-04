@@ -34,13 +34,13 @@ def log_posterior(q, X, y, sigma=1000):
 def grad_log(X, y, q, sigma):
     value = np.exp(-X @ q)
     place = np.where(value == np.inf)[0]
-    print(value)
+    #print(value)
     value = value / (1 + value)
     value[place] = 1.0
 
     grad = X.T @ (y - np.ones(y.shape[0]) + value) - q / sigma
-    print("----------")
-    print(value)
+    #print("----------")
+    #print(value)
     return grad
 
 
@@ -54,14 +54,14 @@ def Verlet(q0, m, p0, eps, T, X, y, sigma):
     p = p0
     while t < T:
         p_tmp = p + eps / 2 * grad_log(X, y, q, sigma)
-        print(p_tmp)
+        #print(p_tmp)
         q = q + eps * np.divide(p_tmp, m)
-        print("--")
-        print(q)
+        #print("--")
+        #print(q)
         p = p_tmp + eps / 2 * grad_log(X, y, q, sigma)
-        print(grad_log(X, y, q, sigma))
-        print("--")
-        print(p)
+        #print(grad_log(X, y, q, sigma))
+        #print("--")
+        #print(p)
         t = t + eps
     return q, p
 
@@ -100,16 +100,16 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
         else:
             q[i + 1, :] = q[i, :]
             rejected = rejected + 1
-            print(f"Problem:{i+1}")
+            #print(f"Problem:{i+1}")
     ratio = accepted / (accepted + rejected)
     return q, ratio
 
 
 def dataset_import():
     this_dir = os.path.dirname(os.getcwd())
-
-    data_dir = os.path.join(this_dir, "src\\birthwt.csv")
+    data_dir = os.path.join(this_dir, "Hamiltonian_Monte_Carlo\\src\\birthwt.csv")
     df = pd.read_csv(data_dir)
+    #print(df.head())
     y = df["low"].copy()
     df = df.drop("Unnamed: 0", axis=1)
     df = df.drop("low", axis=1)
@@ -118,6 +118,7 @@ def dataset_import():
     df.insert(3, "Other", df["af_am"], True)
     df.rename(columns={"ftv": "visit"}, inplace=True)
     df.insert(9, "visits", df["visit"], True)
+    print(df.head())
 
     # transform to array
     X = df.to_numpy()
@@ -142,6 +143,66 @@ def dataset_import():
     return X, y
 
 
+def autocovariance(X): # X is only the tail of q after the burn-in
+    mu = np.mean(X, axis=0)
+    N = len(X[:, 0])
+    D = len(X[0, :])
+    cov = np.zeros([N-1, D])
+    
+    for k in range(N-1):
+        for i in range(N-k-1):
+            cov[k, :] += ((X[i+k, :])-mu)*(X[i, :]-mu)
+        cov[k, :] = (1/(N-k-1))*cov[k, :]
+        
+    return cov
+
+def autocorrelation(autocov):   
+    corr = np.zeros(np.shape(autocov))
+    D = len(autocov[0, 0, :])
+    for i in range(int(len(autocov[0, :, 0]))):
+        for k in range(D):
+            corr[:, i, k] = np.divide(autocov[:, i, k], np.maximum(np.abs(autocov[:, 0, k]), np.finfo(np.float64).eps))
+    
+    return corr
+
+def get_M(autocov): # check adaptation of function for  2 dimensions
+    D = len(autocov[0, :])
+    M = np.zeros(D)
+    for d in range(D):
+        M[d] = None
+        for k in range(int(len(autocov[:, d])/2)):
+            if ((autocov[2*k, d] + autocov[2*k+1, d])<=0):
+                M[d] = 2*k
+                break
+        if M[d] is None:
+            M[d] = int(len(autocov[:, d])-2)
+    
+    
+    return M
+
+def get_sigma(autocov): # To check (difference between serie 13 and lecture notes)
+    M = np.ndarray.astype(get_M(autocov), int)
+    D = len(autocov[0, :])
+    S = np.zeros(D)
+    for d in range(D):
+        id = range(1, M[d])
+        S[d] = autocov[0, d] + 2*np.sum(autocov[id, d])
+
+    return S
+
+
+def effective_sample_size(autocov):
+    [n, N, D] = np.shape(autocov[:, :, :])
+    ess = np.zeros([n, D])
+    for i in range(n):
+        sigma = get_sigma(autocov[i, :, :])
+        for d in range(D):
+        #print("Sigma=", sigma, ", c0=", autocov[i, 0, :], ", N=", N)
+            ess[i, d] = N*np.divide(autocov[i, 0, d], np.maximum(sigma[d],  np.finfo(np.float64).eps))
+
+    return ess
+
+
 if __name__ == "__main__":
 
     # ATTENTION: X should be modified. It is not the same as the one described in the project text
@@ -150,10 +211,26 @@ if __name__ == "__main__":
     X, y = dataset_import()
 
     q0 = np.zeros((1, X.shape[1]))
-    eps = 0.05
-    m = np.ones(X.shape[1])
-    T = 0.10
-    N = 500
+    eps = 0.01
+    m = np.ones(X.shape[1])*1
+    T = 0.4
+    N = 200
     sigma = 1000
+    B=100
 
     (q, ratio) = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma)
+
+    error = np.zeros(N)
+    for i in range(N):
+       error[i] = log_posterior(q[i, :], X, y, sigma)
+
+    print(np.shape(q))
+    fig, ax = plt.subplots(1, 3)
+    ax[0].hist(q[B:, 0])
+    ax[1].hist(q[B:, 1])
+    ax[2].plot(q[:, 0])
+    #ax[3].plot(error)
+    print(np.mean(q[B:, :], axis=0))
+
+
+    plt.show()

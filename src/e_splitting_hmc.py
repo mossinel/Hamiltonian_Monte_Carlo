@@ -33,13 +33,13 @@ def log_posterior(q, X, y, sigma=1000):
 def grad_log(X, y, q, sigma):
     value = np.exp(-X @ q)
     place = np.where(value == np.inf)[0]
-    print(value)
+    #print(value)
     value = value / (1 + value)
     value[place] = 1.0
 
     grad = X.T @ (y - np.ones(y.shape[0]) + value) - q / sigma
-    print("----------")
-    print(value)
+    #print("----------")
+    #print(value)
     return grad
 
 
@@ -53,14 +53,14 @@ def Verlet(q0, m, p0, eps, T, X, y, sigma):
     p = p0
     while t < T:
         p_tmp = p + eps / 2 * grad_log(X, y, q, sigma)
-        print(p_tmp)
+        #print(p_tmp)
         q = q + eps * np.divide(p_tmp, m)
-        print("--")
-        print(q)
+        #print("--")
+        #print(q)
         p = p_tmp + eps / 2 * grad_log(X, y, q, sigma)
-        print(grad_log(X, y, q, sigma))
-        print("--")
-        print(p)
+        #print(grad_log(X, y, q, sigma))
+        #print("--")
+        #print(p)
         t = t + eps
     return q, p
 
@@ -94,15 +94,15 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
         else:
             q[i + 1, :] = q[i, :]
             rejected = rejected + 1
-            print(f"Problem:{i+1}")
+            #print(f"Problem:{i+1}")
     ratio = accepted / (accepted + rejected)
     return q, ratio
 
-
+#To check: can the log posterior can be separated without any problems
 def dataset_import():
     this_dir = os.path.dirname(os.getcwd())
 
-    data_dir = os.path.join(this_dir, "src\\birthwt.csv")
+    data_dir = os.path.join(this_dir, "Hamiltonian_Monte_Carlo\\src\\birthwt.csv")
     df = pd.read_csv(data_dir)
     y = df["low"].copy()
     df = df.drop("Unnamed: 0", axis=1)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     eps = [eps_continuous, eps_categorical]
     m = np.ones(X.shape[1])
     T = 0.10
-    N = 500
+    N = 50000
     sigma = 1000
 
     X_cat = np.c_[X[:, 0], X[:, 3:]]
@@ -165,3 +165,13 @@ if __name__ == "__main__":
         y,
         sigma,
     )
+    print(np.shape(q_cont))
+    fig, ax = plt.subplots(1, 2)
+    ax[0].hist(q_cont[:, 0])
+    ax[1].hist(q_cont[:, 1])
+    print(np.mean(q_cont[10000:, :], axis=0))
+    print(np.mean(q_cat[10000:, :], axis=0))
+
+
+
+    

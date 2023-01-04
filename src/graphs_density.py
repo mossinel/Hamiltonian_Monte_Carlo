@@ -141,10 +141,10 @@ if __name__=="__main__":
     offset = False #Offset of q0 [0.5, 0.5]
 
     N = 100 #length of the chain
-    n = 2000 #number of chains simulated
+    n = 1000 #number of chains simulated
     
     eps = 0.01
-    m = [0.1, 0.1]
+    m = [1, 1]
     T = 0.1
     
     sigma = 0.1
@@ -152,10 +152,10 @@ if __name__=="__main__":
     B = 20
     
     plot=["Density_all", "Density_end", "HMC"]
-    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
-
+    #main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+    '''
     m = [5, 5]
-    T = 0.5
+    T = 0.1
     plot="HMC"
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
@@ -164,6 +164,7 @@ if __name__=="__main__":
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
     m = [5, 5]
+    T=0.5
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
     eps=0.05
@@ -171,6 +172,11 @@ if __name__=="__main__":
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
 
     T=0.1
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+    '''
+    T=0.1
+    eps=0.01
+    m = [0.1, 0.1]
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
     
     plot=["RWMH"]

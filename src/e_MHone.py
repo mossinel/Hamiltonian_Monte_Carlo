@@ -65,17 +65,32 @@ def Verlet(q0, m, p0, eps, T, X, y, sigma):
     return q, p
 
 
-def Gibbs(q0, N, sigma):
-    q = np.zeros([N + 1, q0.shape[1]])
+def MH_one_at_a_time(q0, N, var, X, y, sigma):
+    n = len(q0[0, :])
+    print(n)
+    q = np.zeros([N + 1, n])
+
     q[0, :] = q0
+    accepted = 0
+    rejected = 0
 
     for i in range(N):
-        j = np.random.randint(0, q0.shape[1])
-        q[i + 1, :] = q[i, :]
+        j = np.random.randint(0, n)
+        q_star = np.copy(q[i, :])
         # define posterior wrt other variates (or.....use the prior, like MH?)
-        q[i + 1, j] = np.random.standard_normal() * np.sqrt(sigma)
+        q_star[j] = np.random.normal(loc=q[i, j], scale=var)
+        a = np.exp(log_posterior(q_star, X, y, sigma)-log_posterior(q[i, :], X, y, sigma))
+        u = np.random.uniform()
+        if (u<a):
+            q[i+1, :] = q_star
+            accepted = accepted+1
+        else:
+            q[i+1, :] = q[i, :]
+            rejected = rejected+1
 
-    return q
+    ratio = accepted/(accepted+rejected)
+    return q, ratio
+
 
 
 def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
@@ -159,14 +174,21 @@ if __name__ == "__main__":
     # eps_categorical = 0.05
     # eps = [eps_continuous, eps_categorical]
     m = np.ones(X.shape[1])
-    T = 0.10
-    N = 200000
+    
+    N = 100000
+    var = 1
+    B = 10000
+
     sigma = 1000
 
-    q = Gibbs(q0, N, sigma)
+    q, ratio = MH_one_at_a_time(q0, N, var, X, y, sigma)
 
-    print(np.shape(q))
-    fig, ax = plt.subplots(1, 2)
-    ax[0].hist(q[:, 0])
-    ax[1].hist(q[:, 1])
-    print(np.mean(q[100000:, :], axis=0))
+    print(ratio)
+    fig, ax = plt.subplots(1, 3)
+    ax[0].hist(q[B:, 0])
+    ax[1].hist(q[B:, 1])
+    ax[2].plot(q[:, 0])
+    print(np.mean(q[B:, :], axis=0))
+
+
+    plt.show()

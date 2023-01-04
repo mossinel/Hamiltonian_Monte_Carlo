@@ -104,7 +104,7 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, X, y, sigma):
 def dataset_import():
     this_dir = os.path.dirname(os.getcwd())
 
-    data_dir = os.path.join(this_dir, "src\\birthwt.csv")
+    data_dir = os.path.join(this_dir, "\\Hamiltonian_Monte_Carlo\\src\\birthwt.csv")
     df = pd.read_csv(data_dir)
     y = df["low"].copy()
     df = df.drop("Unnamed: 0", axis=1)

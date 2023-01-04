@@ -12,8 +12,8 @@ def main():
     T = 0.10
     sigma = 1000
     
-    number = 20
-    vector_N = np.ndarray.astype(np.floor(np.logspace(3, 4.5, number)),int)
+    number = 30
+    vector_N = np.ndarray.astype(np.floor(np.logspace(3, 5, number)),int)
 
     B = 500
 
@@ -40,9 +40,11 @@ def main():
     q_exact=np.mean(q_ex, axis=0)
     
     fig, ax = plt.subplots(1, 1)
-    #ax[0].loglog(vector_N, np.abs(np.mean(q_mean-q_exact, axis=1)))
-
     ax.loglog(vector_N, np.divide(np.mean(q_var, axis=1), np.sqrt(vector_N)))
+    ax.set_xlabel("Length of the chain N")
+    ax.set_ylabel("Variance/$\sqrt{N}$")
+    ax.set_title("Convergence HMC")
+
 
     plt.show()
 

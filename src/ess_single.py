@@ -6,10 +6,10 @@ def main():
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    number = 101 # 16
+    number = 11 # 16
 
     #N = 80 #length of the chain
-    vector_N = np.ndarray.astype(np.floor(np.linspace(50, 500, number)), dtype=int)
+    vector_N = np.ndarray.astype(np.floor(np.linspace(70, 470, number)), dtype=int)
     vector_N2 = vector_N
     #vector_N =np.asarray([50, 50, 50])
     #print(vector_N)
@@ -31,7 +31,7 @@ def main():
     k=0
 
     for N in vector_N:
-        B = 20
+        B = 50
         big_q = np.zeros([n, vector_N2[k]+1, 2])
         big_q_ham = np.zeros([n, N+1, 2])
         for i in range(n):
@@ -67,19 +67,19 @@ def main():
         print("Iteration: ", k+1, "/", len(vector_N))
         k=k+1
 
-    fig, ax = plt.subplots(1, 2)
-    ax[0].plot(2*vector_N2, ESS[:, 0])
-    #ax[0, 1].plot(2*vector_N2, ESS[:, 1])
-    ax[1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 0])
-    #ax[1, 1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 1])
-    ax[0].set_title("ESS q[0], RWMH")
-    #ax[0, 1].set_title("ESS q[1], RWMH")
-    ax[1].set_title("ESS q[0], HMC")
-    #ax[1, 1].set_title("ESS q[1], HMC")
-    ax[0].set_ylabel("Effective sample size")
-    #ax[1, 0].set_xlabel("Nb of evaluation of f and df/dqi")
-    ax[1].set_ylabel("Effective sample size")
-    #ax[1, 1].set_xlabel("Nb of evaluation of f and df/dqi")
+    fig, ax = plt.subplots(2, 2)
+    ax[0, 0].plot(2*vector_N2, ESS[:, 0])
+    ax[0, 1].plot(2*vector_N2, ESS[:, 1])
+    ax[1, 0].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 0])
+    ax[1, 1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 1])
+    ax[0, 0].set_title("ESS q[0], RWMH")
+    ax[0, 1].set_title("ESS q[1], RWMH")
+    ax[1, 0].set_title("ESS q[0], HMC")
+    ax[1, 1].set_title("ESS q[1], HMC")
+    ax[0, 0].set_ylabel("Effective sample size")
+    ax[1, 0].set_xlabel("Nb of evaluation of f and df/dqi")
+    ax[1, 0].set_ylabel("Effective sample size")
+    ax[1, 1].set_xlabel("Nb of evaluation of f and df/dqi")
 
     plt.show()
 
