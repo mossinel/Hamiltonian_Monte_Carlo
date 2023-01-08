@@ -6,8 +6,6 @@ def main():
 
     alpha = 10**3
     q0 = [0, 0]
-    q0_type = "Dirac" # Dirac or Normal
-    offset = False #Offset of q0 [0.5, 0.5]
 
     N = 200 #length of the chain
     n = 1000 #number of chains simulated
@@ -16,7 +14,7 @@ def main():
     m = [0.1, 0.1]
     T = 0.2
     
-    sigma = 0.01
+    sigma = 0.1
     
     B = 80
     
@@ -27,15 +25,11 @@ def main():
     big_q = np.zeros([n, N+1, 2])
     big_q_ham = np.zeros([n, N+1, 2])
 
-    #final_q[:, :] = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)[-1, :]
-    #print(np.shape(final_q))
+   
 
     
     for i in range(n):
-        if (q0_type=="Normal"):
-            q0 = np.random.normal(size=2)/2
-        if offset:
-            q0 = q0+np.asarray([0.5, 0.5])
+
         q_ham, ratio_ham[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, ratio[i] = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
@@ -96,101 +90,75 @@ def main():
     ## Calculate effective sample size
     print("Calculating ESS...")
     ESS = effective_sample_size(cov)
-    #ESS = np.sort(ESS, axis=0)
     
     ESS_ham = effective_sample_size(cov_ham)
-    #ESS_ham = np.sort(ESS_ham, axis=0)
 
     id_min_ESS = int(np.floor(n/40))
     id_ESS = id_min_ESS+np.asarray(range(n-2*id_min_ESS))
     ESS_reduced = ESS[id_ESS, :]
     ESS_reduced_ham = ESS_ham[id_ESS, :]
     
-    fig, ax0 = plt.subplots(1, 2)
+    fig, ax0 = plt.subplots(1, 2, figsize=(8, 4))
     ax0[0].plot(exp_q[:, 0], label="RWMH")
-    #ax0[0, 1].plot(exp_q[:, 1], label="RWMH")
     ax0[1].plot(var_q[:, 0], label="RWMH")
-    #ax0[1, 1].plot(var_q[:, 1], label="RWMH")
     ax0[0].set_title("Average q[0](t)")
-    #ax0[0, 1].set_title("Average q[1](t)")
     ax0[1].set_title("Variance q[0](t)")
-    #ax0[1, 1].set_title("Variance q[1](t)")
 
     #fig, ax0_ham = plt.subplots(2, 2)
     ax0[0].plot(exp_q_ham[:, 0], label="HMC")
-    #ax0[0, 1].plot(exp_q_ham[:, 1], label="HMC")
     ax0[1].plot(var_q_ham[:, 0], label="HMC")
-    #ax0[1, 1].plot(var_q_ham[:, 1], label="HMC")
     ax0[0].legend()
-    #ax0[0, 1].legend()
     ax0[1].legend()
-    #ax0[1, 1].legend()
-    #ax0_ham[0, 0].set_title("Average q[0](t), HMC")
-    #ax0_ham[0, 1].set_title("Average q[1](t), HMC")
-    #ax0_ham[1, 0].set_title("Variance q[0](t), HMC")
-    #ax0_ham[1, 1].set_title("Variance q[1](t), HMC")
 
-    fig, ax1 = plt.subplots(1, 2)
+
+    fig, ax1 = plt.subplots(1, 2, figsize=(8, 4))
     ax1[0].plot(cov[-1, :, 0], label="RWMH")
-    #ax1[0, 1].plot(cov[-1, :, 1], label="RWMH")
     ax1[1].plot(corr[-1, :, 0], label="RWMH")
-    #ax1[1, 1].plot(corr[-1, :, 1], label="RWMH")
     ax1[0].set_title("Covariance for q[0], 1 chain")
-    #ax1[0, 1].set_title("Covariance for q[1], 1 chain")
     ax1[1].set_title("Correlation for q[0], 1 chain")
-    #ax1[1, 1].set_title("Correlation for q[1], 1 chain")
 
     #fig, ax1_ham = plt.subplots(2, 2)
     ax1[0].plot(cov_ham[-1, :, 0], label="HMC")
-    #ax1[0, 1].plot(cov_ham[-1, :, 1], label="HMC")
     ax1[1].plot(corr_ham[-1, :, 0], label="HMC")
-    #ax1[1, 1].plot(corr_ham[-1, :, 1], label="HMC")
     ax1[0].legend()
-    #ax1[0, 1].legend()
     ax1[1].legend()
-    #ax1[1, 1].legend()
-    #ax1_ham[0, 0].set_title("Covariance for q[0], 1 chain, HMC")
-    #ax1_ham[0, 1].set_title("Covariance for q[1], 1 chain, HMC")
-    #ax1_ham[1, 0].set_title("Correlation for q[0], 1 chain, HMC")
-    #ax1_ham[1, 1].set_title("Correlation for q[1], 1 chain, HMC")
     
 
 
-    fig, ax2 = plt.subplots(1, 2)
+    fig, ax2 = plt.subplots(1, 2, figsize=(8, 4))
     ax2[0].plot(np.mean(cov[:, :, 0], axis=0), label="RWMH")
-    #ax2[0, 1].plot(np.mean(cov[:, :, 1], axis=0), label="RWMH")
     ax2[1].plot(np.mean(corr[:, :, 0], axis=0), label="RWMH")
-    #ax2[1, 1].plot(np.mean(corr[:, :, 1], axis=0), label="RWMH")
     ax2[0].set_title("Averaged covariance for q[0]")
-    #ax2[0, 1].set_title("Averaged covariance for q[1]")
     ax2[1].set_title("Averaged correlation for q[0]")
-    #ax2[1, 1].set_title("Averaged correlation for q[1]")
 
-    #fig, ax2_ham = plt.subplots(2, 2)
+
     ax2[0].plot(np.mean(cov_ham[:, :, 0], axis=0), label="HMC")
-    #ax2[0, 1].plot(np.mean(cov_ham[:, :, 1], axis=0), label="HMC")
     ax2[1].plot(np.mean(corr_ham[:, :, 0], axis=0), label="HMC")
-    #ax2[1, 1].plot(np.mean(corr_ham[:, :, 1], axis=0), label="HMC")
     ax2[0].legend()
-    #ax2[0, 1].legend()
     ax2[1].legend()
-    #ax2[1, 1].legend()
-    #ax2_ham[0, 0].set_title("Averaged covariance for q[0], HMC")
-    #ax2_ham[0, 1].set_title("Averaged covariance for q[1], HMC")
-    #ax2_ham[1, 0].set_title("Averaged correlation for q[0], HMC")
-    #ax2_ham[1, 1].set_title("Averaged correlation for q[1], HMC")
+    
+
+    fig, ax4 = plt.subplots(1, 2, figsize=(8, 4))
+    ax4[0].plot(np.mean(cov[:, :, 0], axis=0), label="mean RWMH")
+    ax4[1].plot(np.mean(corr[:, :, 0], axis=0), label="mean RWMH")
+    ax4[0].set_title("Covariance for q[0]")
+    ax4[1].set_title("Correlation for q[0]")
+    ax4[0].plot(np.mean(cov_ham[:, :, 0], axis=0), label="mean HMC")
+    ax4[1].plot(np.mean(corr_ham[:, :, 0], axis=0), label="mean HMC")
+    ax4[0].plot(cov[-1, :, 0], label="RWMH")
+    ax4[1].plot(corr[-1, :, 0], label="RWMH")
+    ax4[0].plot(cov_ham[-1, :, 0], label="HMC")
+    ax4[1].plot(corr_ham[-1, :, 0], label="HMC")
+    ax4[0].legend()
+    ax4[1].legend()
 
 
 
-    fig, ax3 = plt.subplots(1, 2)
+    fig, ax3 = plt.subplots(1, 2, figsize=(8, 4))
     ax3[0].hist(ESS[:, 0], 50, density=False)
-    #ax3[0, 1].hist(ESS[:, 1], 50, density=False)
     ax3[1].hist(ESS_ham[:, 0], 50, density=False)
-    #ax3[1, 1].hist(ESS_ham[:, 1], 50, density=False)
     ax3[0].set_title("ESS for q[0], RWMH")
-    #ax3[0, 1].set_title("ESS for q[1], RWMH")
     ax3[1].set_title("ESS for q[0], HMC")
-    #ax3[1, 1].set_title("ESS for q[1], HMC")
     
 
     plt.show()

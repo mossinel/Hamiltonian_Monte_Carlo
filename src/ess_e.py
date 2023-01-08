@@ -67,7 +67,7 @@ def main():
     ax.plot(vector_N, ESS_ham[:, 10], label="ftv22+")
     ax.set_title("ESS, HMC")
     ax.set_ylabel("Effective sample size")
-    ax.set_ylabel("N of the chain")
+    ax.set_xlabel("N of the chain")
     ax.legend()
 
     plt.show()

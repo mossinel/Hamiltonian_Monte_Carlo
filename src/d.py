@@ -1,35 +1,25 @@
 import numpy as np
 import scipy.stats as st
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
-'''
-TODO: 
-Check q(x, y) in alpha  in RWMC
 
-Correct the autocorrelation function
 
-Check the ESS
-
-Prepare graphs
-'''
-
-def f(q, alpha):
+def f(q, alpha): # unnormalized distribution
     return np.exp(-alpha*(q@q-1/4)**2)
 
-def U(q, alpha):
+def U(q, alpha): #-log(f) (potential energy)
     return alpha*(q@q-1/4)**2
 
-def K(p, m):
+def K(p, m): #kinetic energy
     return np.sum(1/2*np.divide(p*p, m))
 
-def dU(q, alpha):
+def dU(q, alpha): #gradient of U
     dU1 = 4*q[0]*alpha*(q@q-1/4)
     dU2 = 4*q[1]*alpha*(q@q-1/4)
     return np.asarray([dU1, dU2])
 
 
-def Verlet(q0, p0, eps, T, alpha, m):
+def Verlet(q0, p0, eps, T, alpha, m): #Verlet's scheme 
     t=0
     q=q0
     p=p0
@@ -40,7 +30,7 @@ def Verlet(q0, p0, eps, T, alpha, m):
         t=t+eps
     return q, p
 
-def autocovariance(X): # X is only the tail of q after the burn-in
+def autocovariance(X): # Autocovariance of a Markov chain X, X tail of q after burn-in lag B
     mu = np.mean(X, axis=0)
     N = len(X[:, 0])
     cov = np.zeros([N-1, 2])
@@ -52,16 +42,15 @@ def autocovariance(X): # X is only the tail of q after the burn-in
         
     return cov
 
-def autocorrelation(autocov):   
+def autocorrelation(autocov): # Autocorrelation of a Markov chain, calculated from its autocovariance
     corr = np.zeros(np.shape(autocov))
     for i in range(int(len(autocov[0, :, 0]))):
         corr[:, i, 0] = np.divide(autocov[:, i, 0], np.maximum(np.abs(autocov[:, 0, 0]), np.finfo(np.float64).eps))
         corr[:, i, 1] = np.divide(autocov[:, i, 1], np.maximum(np.abs(autocov[:, 0, 1]), np.finfo(np.float64).eps))
-    #corr_2 = np.divide(autocov[:, :, 1], autocov[:, 0, 1])
-    #corr = np.concatenate(corr_1, corr_2, axis=2)
+    
     return corr
 
-def get_M(autocov): # check adaptation of function for  2 dimensions
+def get_M(autocov): # Last element of the chain used to calculate sigma^2_mcmc
     M1 = None
     for k in range(int(len(autocov[:, 0])/2)):
         if ((autocov[2*k, 0] + autocov[2*k+1, 0])<=0):
@@ -79,7 +68,8 @@ def get_M(autocov): # check adaptation of function for  2 dimensions
     
     return M1, M2
 
-def get_sigma(autocov): # To check (difference between serie 13 and lecture notes)
+def get_sigma(autocov): # Time-average variance constant of a Markov chain, calculated from its autocovariance
+    # Calculate the
     [M1, M2] = get_M(autocov)
     id1 = range(1, M1)
     S1 = autocov[0, 0] + 2*np.sum(autocov[id1, 0])
@@ -89,12 +79,11 @@ def get_sigma(autocov): # To check (difference between serie 13 and lecture note
     return [S1, S2]
 
 
-def effective_sample_size(autocov):
+def effective_sample_size(autocov): # effective sample size of a Markov chain, calculated from its autocovariance
     [n, N] = np.shape(autocov[:, :, 0])
     ess = np.zeros([n, 2])
     for i in range(n):
         sigma = get_sigma(autocov[i, :, :])
-        #print("Sigma=", sigma, ", c0=", autocov[i, 0, :], ", N=", N)
         ess[i, 0] = N*np.divide(autocov[i, 0, 0], np.maximum(sigma[0],  np.finfo(np.float64).eps))
         ess[i, 1] = N*np.divide(autocov[i, 0, 1], np.maximum(sigma[1],  np.finfo(np.float64).eps))
 
@@ -108,7 +97,7 @@ def Metropolis_Hastings(q0, N, alpha, sigma):
     rejected = 0
     for i in range(N):
         q_star = np.random.multivariate_normal(mean=q[i, :], cov=sigma*np.eye(2))
-        a = f(q_star, alpha)/np.maximum(f(q[i, :], alpha), np.finfo(np.float64).eps)#*(st.norm.pdf(q[i, 0]-q_star[0])*st.norm.pdf(q[i, 1]-q_star[1]))/(st.norm.pdf(q_star[0]-q[i, 0])*st.norm.pdf(q_star[1]-q[i, 1]))
+        a = f(q_star, alpha)/np.maximum(f(q[i, :], alpha), np.finfo(np.float64).eps)
         u = np.random.uniform()
         if (u<a):
             q[i+1, :] = q_star
@@ -136,17 +125,13 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
         else:
             q[i+1, :] = q[i, :]
             rejected = rejected+1
-            #print("Problem")
     ratio = accepted/(accepted+rejected)
     return q, ratio
 
    
-## number of evaluation of f and df/dqi
-## RWMH: n*N*2
-## HMC: n*N*(2+floor(T/eps)*4)
 
 def main():
-    q0 = [0.0, 0.0] # idea: change q0, if q0 follow the objective distribution, then q should follow the distribution at any time
+    q0 = [0.0, 0.0]
     eps = 0.01
     alpha = 10**3
     m = [1, 1]
@@ -162,12 +147,9 @@ def main():
     big_q = np.zeros([n, N+1, 2])
     big_q_ham = np.zeros([n, N+1, 2])
 
-    #final_q[:, :] = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)[-1, :]
-    #print(np.shape(final_q))
-
-    
+        
     for i in range(n):
-        #q0 = [0.5, 0.5]+np.random.normal(size=2)/2
+
         q_ham, ratio[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, _ = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
@@ -179,7 +161,6 @@ def main():
 
             
     
-    #q = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
     exp_q = np.mean(big_q, axis=0)
     var_q = np.var(big_q, axis=0)
 
@@ -196,14 +177,13 @@ def main():
     ## Calculate autocorrelation of both chains q(:, 0) and q(:, 1)
     B = 20
     idx = B+np.asarray(range(N-B))
-    #print(idx)
+
     tail_qx = big_q[:, idx, 0]
     tail_qy = big_q[:, idx, 1]
     tail_q = big_q[:, idx, :]
     tail_qx_ham = big_q_ham[:, idx, 0]
     tail_qy_ham = big_q_ham[:, idx, 1]
-    tail_q_ham = big_q_ham[:, idx, :]
-    var_tail_q = np.var(tail_q, axis=0)
+
     print("Calculating covariance...")
     cov = np.zeros([n, len(idx)-1, 2])
     for i in range(n):
@@ -227,15 +207,8 @@ def main():
     avy_ham = np.reshape(tail_qy_ham, -1)
 
     fig, axs = plt.subplots(2, 2) 
-    #axs[0, 0].hist(final_q[:, 0], 50, density=False)
-    #axs[0, 1].hist(final_q[:, 1], 50, density=False)
-    #axs[0, 0].hist2d(big_q[:, -3, 0], big_q[:, -3, 1], bins=(50, 50), cmap=plt.cm.jet)
-    #axs[0, 1].hist2d(big_q[:, -2, 0], big_q[:, -2, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[0, 0].hist2d(avx, avy, bins=(50, 50), cmap=plt.cm.jet)
     axs[0, 1].hist2d(avx_ham, avy_ham, bins=(50, 50), cmap=plt.cm.jet)
-    #axs[0, 1].hist2d(big_q[:, -1, 0], big_q[:, -1, 1], bins=(50, 50), cmap=plt.cm.jet)
-    #axs[0, 0].hist2d(final_q_ham[:, 0], final_q_ham[:, 1], bins=(50, 50), cmap=plt.cm.jet)
-    #axs[0, 1].hist2d(big_q[:, -2, 0], big_q[:, -2, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[1, 0].hist2d(final_q[:, 0], final_q[:, 1], bins=(50, 50), cmap=plt.cm.jet)
     axs[1, 1].pcolormesh(x, x, y, cmap=plt.cm.jet)
 
@@ -252,8 +225,6 @@ def main():
     axs2[1, 0].plot(exp_q[:, 1])
     axs2[0, 1].plot(var_q[:, 0])
     axs2[1, 1].plot(var_q[:, 1])
-    #axs2[0, 2].plot(np.mean(cov[:, :, 0], axis=0))
-    #axs2[1, 2].plot(np.mean(cov[:, :, 1], axis=0))
     axs2[0, 2].plot(cov[-1, :, 0])
     axs2[1, 2].plot(cov[-1, :, 1])
     axs2[0, 3].plot(corr[:, 0])
@@ -263,9 +234,6 @@ def main():
     fig, ax3 = plt.subplots(1, 2)
     ax3[0].hist(ESS_reduced[:, 0], 50, density=False)
     ax3[1].hist(ESS_reduced[:, 1], 50, density=False)
-
-
-    #idea: make a plot of the density over an axis as a function of the time
 
 
     plt.show()
@@ -287,4 +255,3 @@ def test_f():
 
 if __name__=='__main__':
     main()
-    #test_f()

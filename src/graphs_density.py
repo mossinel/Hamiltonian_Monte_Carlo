@@ -4,24 +4,10 @@ from d import*
 
 
 def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False):
-    '''
-    alpha = 10**1
-    q0 = [0, 0]
-    q0_type = "Dirac" # Dirac or Normal
-    offset = False #Offset of q0 [0.5, 0.5]
+    
 
-    N = 100 #length of the chain
-    n = 2000 #number of chains simulated
-    
-    eps = 0.01
-    m = [1, 1]
-    T = 0.1
-    
-    sigma = 0.1
-    
-    B = 20
 
-    '''
+    
     final_q = np.zeros([n, 2])
     final_q_ham = np.zeros([n, 2])
     ratio = np.zeros(n)
@@ -29,15 +15,10 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
     big_q = np.zeros([n, N+1, 2])
     big_q_ham = np.zeros([n, N+1, 2])
 
-    #final_q[:, :] = Hamiltonian_Monte_Carlo(q0, m, N, eps, alpha)[-1, :]
-    #print(np.shape(final_q))
-
+   
     
     for i in range(n):
-        if (q0_type=="Normal"):
-            q0 = np.random.normal(size=2)/4
-        if offset:
-            q0 = q0+[0.5, 0.5]
+        
         q_ham, ratio_ham[i] = Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha)
         q, ratio[i] = Metropolis_Hastings(q0, N, alpha, sigma)
         final_q[i, :] = q[-1, :]
@@ -58,14 +39,12 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
     
     
     idx = B+np.asarray(range(N-B))
-    #print(idx)
     tail_qx = big_q[:, idx, 0]
     tail_qy = big_q[:, idx, 1]
     tail_q = big_q[:, idx, :]
     tail_qx_ham = big_q_ham[:, idx, 0]
     tail_qy_ham = big_q_ham[:, idx, 1]
     tail_q_ham = big_q_ham[:, idx, :]
-    #var_tail_q = np.var(tail_q, axis=0)
     
 
     avx = np.reshape(tail_qx, -1)
@@ -80,7 +59,7 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
         fig1, ax1 =plt.subplots(1, 2, figsize=(8, 4))
         ax1[0].hist2d(big_q[:, -1, 0], big_q[:, -1, 1], range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
         ax1[1].hist2d(big_q_ham[:, -1, 0], big_q_ham[:, -1, 1], range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
-        ax1[0].set_title("RWMC")
+        ax1[0].set_title("RWMH")
         ax1[1].set_title("HMC")
         ax1[0].set_xlabel("q[0]")
         ax1[1].set_xlabel("q[0]")
@@ -94,7 +73,7 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
         ax2[0].hist2d(avx, avy, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
         ax2[1].hist2d(avx_ham, avy_ham, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
         ax2[2].pcolormesh(x, x, y, cmap=plt.cm.jet)
-        ax2[0].set_title("RWMC")
+        ax2[0].set_title("RWMH")
         ax2[1].set_title("HMC")
         ax2[2].set_title("Theoretical")
         ax2[0].set_xlabel("q[0]")
@@ -108,7 +87,7 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
     if "RWMH" in plot:
         fig, ax = plt.subplots(1, 1, figsize=(4,4))
         ax.hist2d(avx, avy, range=[[-1, 1], [-1, 1]], bins=(50, 50), cmap=plt.cm.jet)
-        ax.set_title("RWMC")
+        ax.set_title("RWMH")
         ax.set_xlabel("q[0]")
         ax.set_ylabel("q[1]")
         fig.tight_layout()
@@ -135,12 +114,12 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
 
 if __name__=="__main__":
 
-    alpha = 10**1
+    alpha = 10**3
     q0 = [0, 0]
     q0_type = "Dirac" # Dirac or Normal
     offset = False #Offset of q0 [0.5, 0.5]
 
-    N = 100 #length of the chain
+    N = 200 #length of the chain
     n = 1000 #number of chains simulated
     
     eps = 0.01
@@ -149,11 +128,11 @@ if __name__=="__main__":
     
     sigma = 0.1
     
-    B = 20
+    B = 80
     
     plot=["Density_all", "Density_end", "HMC"]
-    #main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
-    '''
+    main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
+    
     m = [5, 5]
     T = 0.1
     plot="HMC"
@@ -173,7 +152,7 @@ if __name__=="__main__":
 
     T=0.1
     main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=False)
-    '''
+    
     T=0.1
     eps=0.01
     m = [0.1, 0.1]

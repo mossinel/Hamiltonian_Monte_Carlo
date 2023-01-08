@@ -175,9 +175,9 @@ if __name__ == "__main__":
     # eps = [eps_continuous, eps_categorical]
     m = np.ones(X.shape[1])
     
-    N = 100000
-    var = 1
-    B = 10000
+    N = 30000
+    var = 0.5
+    B = 20000
 
     sigma = 1000
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 3)
     ax[0].hist(q[B:, 0])
     ax[1].hist(q[B:, 1])
-    ax[2].plot(q[:, 0])
+    ax[2].plot(q[:, 6])
     print(np.mean(q[B:, :], axis=0))
 
 
