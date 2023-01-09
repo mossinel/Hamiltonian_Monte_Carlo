@@ -7,7 +7,7 @@ def main():
     alpha = 10**3
     q0 = [0, 0]
 
-    N = 200 #length of the chain
+    N = 300 #length of the chain
     n = 1000 #number of chains simulated
     
     eps = 0.01
@@ -16,7 +16,7 @@ def main():
     
     sigma = 0.1
     
-    B = 80
+    B = 100
     
     final_q = np.zeros([n, 2])
     final_q_ham = np.zeros([n, 2])

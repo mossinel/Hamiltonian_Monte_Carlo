@@ -105,7 +105,6 @@ def get_M(autocov): # Last element of the chain used to calculate sigma^2_mcmc
     return M1, M2
 
 def get_sigma(autocov): # Time-average variance constant of a Markov chain, calculated from its autocovariance
-    # Calculate the
     [M1, M2] = get_M(autocov)
     id1 = range(1, M1)
     S1 = autocov[0, 0] + 2*np.sum(autocov[id1, 0])
