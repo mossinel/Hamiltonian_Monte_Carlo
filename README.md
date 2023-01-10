@@ -23,7 +23,7 @@ Team members: Maxence Hofer, Giacomo Mossinelli
 
 - `ess_single.py` - produce the effective sample size for the number of evaluation of f and df/dq
 
-- `e_new_new.py` - functions used in point e)
+- `e.py` - functions used in point e)
 
 - `ess_e.py` - produce the effective sample size graph for point e)
 
