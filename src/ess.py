@@ -1,16 +1,16 @@
 from d import*
 
 def main():
-    alpha = 10**3
+    alpha = 10**1
     q0 = [0, 0]
 
-    number = 101 
+    number = 51 
 
 
     vector_N = np.ndarray.astype(np.floor(np.linspace(50, 500, number)), dtype=int)
     vector_N2 = vector_N
 
-    n = 50 
+    n = 20 
     
     eps = 0.01
     m = [0.1, 0.1]
@@ -56,13 +56,14 @@ def main():
         print("Iteration: ", k+1, "/", len(vector_N))
         k=k+1
 
-    fig, ax = plt.subplots(1, 2)
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
     ax[0].plot(2*vector_N2, ESS[:, 0])
     ax[1].plot((2+np.floor(T/eps)*4*vector_N), ESS_ham[:, 0])
     ax[0].set_title("ESS q[0], RWMH")
     ax[1].set_title("ESS q[0], HMC")
     ax[0].set_ylabel("Effective sample size")
     ax[1].set_ylabel("Effective sample size")
+    fig.tight_layout()
 
 
 
