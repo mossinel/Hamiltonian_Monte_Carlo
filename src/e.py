@@ -73,7 +73,6 @@ def Hamiltonian_Monte_Carlo(
         else:
             q[i + 1, :] = q[i, :]
             rejected = rejected + 1
-            print(f"Problem:{i+1}")
     ratio = accepted / (accepted + rejected)
     return q, ratio
 
@@ -81,7 +80,7 @@ def Hamiltonian_Monte_Carlo(
 
 def MH_one_at_a_time(q0, N, var, X, y, sigma): # one variable at a time Metropolis Hastings
     n = len(q0[0, :])
-    print(n)
+    #print(n)
     q = np.zeros([N + 1, n])
 
     q[0, :] = q0
@@ -109,7 +108,7 @@ def MH_one_at_a_time(q0, N, var, X, y, sigma): # one variable at a time Metropol
 def dataset_import():
     this_dir = os.path.dirname(os.getcwd())
 
-    data_dir = os.path.join(this_dir, "src\\birthwt.csv")
+    data_dir = os.path.join(this_dir, "Hamiltonian_Monte_Carlo\\src\\birthwt.csv")
     df = pd.read_csv(data_dir)
     y = df["low"].copy()
     df = df.drop("Unnamed: 0", axis=1)
