@@ -27,7 +27,7 @@ Team members: Maxence Hofer, Giacomo Mossinelli
 
 - `ess_e.py` - produce the effective sample size graph for point e)
 
-- `convergence_analysis.py` - produce the comparison graphs between HMC and 1MH for point f)
+- `comparison_HMC_1MH.py` - produce the comparison graphs between HMC and 1MH for point f)
 
 
 

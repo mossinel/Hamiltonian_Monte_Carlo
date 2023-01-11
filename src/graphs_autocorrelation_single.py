@@ -22,8 +22,8 @@ def main():
     final_q_ham = np.zeros([n, 2])
     ratio = np.zeros(n)
     ratio_ham = np.zeros(n)
-    big_q = np.zeros([n, N+1, 2])
-    big_q_ham = np.zeros([n, N+1, 2])
+    big_q = np.zeros([n, N+1, 2]) # matrix containing all chains simulated for RWMH
+    big_q_ham = np.zeros([n, N+1, 2]) # matrix containing all chains simulated for HMC
 
     
     for i in range(n):
@@ -56,19 +56,9 @@ def main():
     
     idx = B+np.asarray(range(N-B))
     #print(idx)
-    tail_qx = big_q[:, idx, 0]
-    tail_qy = big_q[:, idx, 1]
-    tail_q = big_q[:, idx, :]
-    tail_qx_ham = big_q_ham[:, idx, 0]
-    tail_qy_ham = big_q_ham[:, idx, 1]
-    tail_q_ham = big_q_ham[:, idx, :]
-    var_tail_q = np.var(tail_q, axis=0)
+    tail_q = big_q[:, idx, :] # end of the matrix with all chains after the burn-in lag B for RWMH
+    tail_q_ham = big_q_ham[:, idx, :] # end of the matrix with all chains after the burn-in lag B for HMC
     
-
-    avx = np.reshape(tail_qx, -1)
-    avy = np.reshape(tail_qy, -1)
-    avx_ham = np.reshape(tail_qx_ham, -1)
-    avy_ham = np.reshape(tail_qy_ham, -1)
 
     print("Calculating covariance...")
     cov = np.zeros([n, len(idx)-1, 2])
@@ -93,9 +83,11 @@ def main():
 
     id_min_ESS = int(np.floor(n/40))
     id_ESS = id_min_ESS+np.asarray(range(n-2*id_min_ESS))
-    ESS_reduced = ESS[id_ESS, :]
-    ESS_reduced_ham = ESS_ham[id_ESS, :]
-    
+
+
+    ## Plot
+
+
     fig, ax0 = plt.subplots(1, 2, figsize=(8, 4))
     ax0[0].plot(exp_q[:, 0], label="RWMH")
     ax0[1].plot(var_q[:, 0], label="RWMH")

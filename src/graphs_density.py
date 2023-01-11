@@ -53,7 +53,7 @@ def main(alpha, q0, N, n, eps, m, T, sigma, B, plot, q0_type="Dirac", offset=Fal
     avy_ham = np.reshape(tail_qy_ham, -1)
 
     
-
+    ## Choice of the plot
 
     if "Density_end" in plot:
         fig1, ax1 =plt.subplots(1, 2, figsize=(8, 4))

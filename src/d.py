@@ -90,7 +90,7 @@ def effective_sample_size(autocov): # effective sample size of a Markov chain, c
     return ess
 
 
-def Metropolis_Hastings(q0, N, alpha, sigma):
+def Metropolis_Hastings(q0, N, alpha, sigma): # implementation of the Random Walk Metropolis-Hastings algorithm
     q = np.zeros([N+1, 2])
     q[0, :] = q0
     accepted = 0
@@ -110,7 +110,7 @@ def Metropolis_Hastings(q0, N, alpha, sigma):
 
 
 
-def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
+def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha): # implementation of the Hamiltonian Monte Carlo algorithm
     q = np.zeros([N+1, 2])
     q[0, :] = q0
     accepted = 0
@@ -130,7 +130,7 @@ def Hamiltonian_Monte_Carlo(q0, m, N, T, eps, alpha):
 
    
 
-def main():
+def main(): # used to test the first implementations, not used to produce the graphs in the report
     q0 = [0.0, 0.0]
     eps = 0.01
     alpha = 10**3
@@ -164,7 +164,7 @@ def main():
     exp_q = np.mean(big_q, axis=0)
     var_q = np.var(big_q, axis=0)
 
-    # Preparing for the graph of f
+    # computing the unnormalized distribution
 
     t = np.linspace(0, T*N, N+1)
     v = np.exp(-alpha*(q[:, 0]**2+q[:, 1]**2-1/4)**2)
