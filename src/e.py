@@ -79,7 +79,7 @@ def Hamiltonian_Monte_Carlo(
 
 
 
-def MH_one_at_a_time(q0, N, var, X, y, sigma):
+def MH_one_at_a_time(q0, N, var, X, y, sigma): # one variable at a time Metropolis Hastings
     n = len(q0[0, :])
     print(n)
     q = np.zeros([N + 1, n])
@@ -143,7 +143,8 @@ def dataset_import():
     return X, y
 
 
-def autocovariance(X): # X is only the tail of q after the burn-in
+def autocovariance(X): # compute the autocovariance of the chain
+    # X is only the tail of q after the burn-in
     mu = np.mean(X, axis=0)
     N = len(X[:, 0])
     D = len(X[0, :])
@@ -156,7 +157,7 @@ def autocovariance(X): # X is only the tail of q after the burn-in
         
     return cov
 
-def autocorrelation(autocov):   
+def autocorrelation(autocov): # compute the autocorrelation of the chain from its autocovariance    
     corr = np.zeros(np.shape(autocov))
     D = len(autocov[0, 0, :])
     for i in range(int(len(autocov[0, :, 0]))):
@@ -165,7 +166,7 @@ def autocorrelation(autocov):
     
     return corr
 
-def get_M(autocov): # check adaptation of function for  2 dimensions
+def get_M(autocov): # compute the M value for each parameters of q
     D = len(autocov[0, :])
     M = np.zeros(D)
     for d in range(D):
@@ -180,7 +181,7 @@ def get_M(autocov): # check adaptation of function for  2 dimensions
     
     return M
 
-def get_sigma(autocov): # To check (difference between serie 13 and lecture notes)
+def get_sigma(autocov): # compute the time-average variance constant of the Markov chain from its autocovariance
     M = np.ndarray.astype(get_M(autocov), int)
     D = len(autocov[0, :])
     S = np.zeros(D)
@@ -191,7 +192,7 @@ def get_sigma(autocov): # To check (difference between serie 13 and lecture note
     return S
 
 
-def effective_sample_size(autocov):
+def effective_sample_size(autocov): # compute the effective sample size of the Markov chain from its autocovariance
     [n, N, D] = np.shape(autocov[:, :, :])
     ess = np.zeros([n, D])
     for i in range(n):
